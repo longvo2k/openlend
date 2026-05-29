@@ -148,4 +148,38 @@ describe("LendingPool", () => {
       // (No assertion here beyond compile; this 'it' will be replaced in Task 8.)
     });
   });
+
+  describe("Collateral", () => {
+    it("reverts on zero msg.value", async () => {
+      const { pool, alice } = await deploy();
+      await expect(
+        pool.connect(alice).depositCollateral({ value: 0n }),
+      ).to.be.revertedWithCustomError(pool, "ZeroAmount");
+    });
+
+    it("tracks collateral deposits", async () => {
+      const { pool, alice } = await deploy();
+      const amt = ethers.parseEther("2");
+      await expect(pool.connect(alice).depositCollateral({ value: amt }))
+        .to.emit(pool, "CollateralDeposited")
+        .withArgs(alice.address, amt);
+      expect(await pool.collateral(alice.address)).to.equal(amt);
+    });
+
+    it("allows full collateral withdrawal when no debt", async () => {
+      const { pool, alice } = await deploy();
+      const amt = ethers.parseEther("2");
+      await pool.connect(alice).depositCollateral({ value: amt });
+      await expect(pool.connect(alice).withdrawCollateral(amt)).to.changeEtherBalance(alice, amt);
+      expect(await pool.collateral(alice.address)).to.equal(0n);
+    });
+
+    it("reverts on collateral withdraw exceeding balance", async () => {
+      const { pool, alice } = await deploy();
+      await pool.connect(alice).depositCollateral({ value: ethers.parseEther("1") });
+      await expect(
+        pool.connect(alice).withdrawCollateral(ethers.parseEther("2")),
+      ).to.be.revertedWithCustomError(pool, "InsufficientCollateral");
+    });
+  });
 });

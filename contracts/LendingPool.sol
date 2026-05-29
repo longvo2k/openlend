@@ -125,4 +125,45 @@ contract LendingPool is ReentrancyGuard {
     function availableLiquidity() public view returns (uint256) {
         return totalSupplied - totalBorrowed;
     }
+
+    // ----- Collateral -----
+
+    function depositCollateral() external payable nonReentrant {
+        if (msg.value == 0) revert ZeroAmount();
+        _accrueInterest();
+        collateral[msg.sender] += msg.value;
+        emit CollateralDeposited(msg.sender, msg.value);
+    }
+
+    function withdrawCollateral(uint256 amount) external nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+        _accrueInterest();
+        uint256 bal = collateral[msg.sender];
+        if (amount > bal) revert InsufficientCollateral();
+        // Health check is enforced only when user has debt; debt path lands in Task 8.
+        collateral[msg.sender] = bal - amount;
+        if (_healthFactorAfter(msg.sender, collateral[msg.sender], debtOf(msg.sender)) < WAD) {
+            revert Undercollateralized();
+        }
+        (bool ok, ) = msg.sender.call{value: amount}("");
+        if (!ok) revert TransferFailed();
+        emit CollateralWithdrawn(msg.sender, amount);
+    }
+
+    // ----- Debt views (stub bodies; full logic added in Borrow task) -----
+
+    function debtOf(address user) public view returns (uint256) {
+        uint256 principal = borrowed[user];
+        if (principal == 0) return 0;
+        return (principal * borrowIndex) / userBorrowIndex[user];
+    }
+
+    function _healthFactorAfter(
+        address /*user*/,
+        uint256 newCollateral,
+        uint256 newDebt
+    ) internal pure returns (uint256) {
+        if (newDebt == 0) return type(uint256).max;
+        return (newCollateral * LIQ_THRESHOLD_BPS * WAD) / (newDebt * BPS_DENOM);
+    }
 }

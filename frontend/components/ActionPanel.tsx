@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import {
+  useAccount,
   useChainId,
+  useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
   usePublicClient,
 } from 'wagmi';
+import { formatUnits } from 'viem';
 import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
 import { iopnTestnet } from '../lib/chains';
-import { parseOPN } from '../lib/format';
+import { formatOPN, parseOPN } from '../lib/format';
 
 type Kind = 'supply' | 'withdraw' | 'borrow' | 'repay';
 
@@ -61,6 +64,7 @@ export function ActionPanel({ kind }: Props) {
   const chainId = useChainId();
   const pool = getLendingPoolAddress(chainId);
   const publicClient = usePublicClient();
+  const { address: user } = useAccount();
   const [primary, setPrimary] = useState('');
   const [secondary, setSecondary] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +74,19 @@ export function ActionPanel({ kind }: Props) {
   const { isLoading: receiptLoading, isSuccess: receiptSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  // Max-withdrawable = current supplyShares balance.
+  const { data: maxWithdrawSharesRaw } = useReadContract({
+    address: pool ?? undefined,
+    abi: lendingPoolAbi,
+    functionName: 'supplyShares',
+    args: user ? [user] : undefined,
+    query: {
+      enabled: Boolean(kind === 'withdraw' && user && pool),
+      refetchInterval: 5000,
+    },
+  });
+  const maxWithdrawShares = maxWithdrawSharesRaw as bigint | undefined;
 
   const reload = () => {
     setError(null);
@@ -182,6 +199,23 @@ export function ActionPanel({ kind }: Props) {
             className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 outline-none focus:border-emerald-500 disabled:opacity-50"
           />
         </label>
+        {kind === 'withdraw' && (
+          <div className="-mt-2 flex items-center justify-between text-xs">
+            <span className="text-zinc-500">
+              Available: {maxWithdrawShares === undefined ? '—' : `${formatOPN(maxWithdrawShares)} shares`}
+            </span>
+            <button
+              type="button"
+              disabled={busy || !maxWithdrawShares || maxWithdrawShares === 0n}
+              onClick={() =>
+                maxWithdrawShares && setPrimary(formatUnits(maxWithdrawShares, 18))
+              }
+              className="font-medium uppercase tracking-wide text-emerald-400 hover:text-emerald-300 disabled:text-zinc-600 disabled:cursor-not-allowed"
+            >
+              Max
+            </button>
+          </div>
+        )}
         {meta.secondaryLabel && (
           <label className="block">
             <span className="text-xs uppercase tracking-wide text-zinc-500">{meta.secondaryLabel}</span>

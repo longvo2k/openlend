@@ -1,4 +1,4 @@
-import lendingPoolArtifact from '../../artifacts/contracts/LendingPool.sol/LendingPool.json';
+import lendingPoolArtifact from '@root/artifacts/contracts/LendingPool.sol/LendingPool.json';
 
 export const lendingPoolAbi = lendingPoolArtifact.abi;
 
@@ -10,11 +10,11 @@ export type SupportedChainId = (typeof SUPPORTED_CHAIN_IDS)[number];
 export function getLendingPoolAddress(chainId: number): `0x${string}` | null {
   try {
     if (chainId === 984) {
-      const d = require('../../deployments/iopnTestnet.json') as DeploymentRecord;
+      const d = require('@root/deployments/iopnTestnet.json') as DeploymentRecord;
       return d.lendingPool;
     }
     if (chainId === 31337) {
-      const d = require('../../deployments/hardhat.json') as DeploymentRecord;
+      const d = require('@root/deployments/hardhat.json') as DeploymentRecord;
       return d.lendingPool;
     }
   } catch {

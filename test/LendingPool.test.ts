@@ -315,4 +315,85 @@ describe("LendingPool", () => {
       expect(await pool.healthFactor(bob.address)).to.equal(ethers.parseEther("1.6"));
     });
   });
+
+  describe("Liquidation", () => {
+    async function unhealthy() {
+      const ctx = await deploy();
+      // Alice supplies; Bob borrows near LTV cap.
+      await ctx.pool.connect(ctx.alice).supply({ value: ethers.parseEther("100") });
+      await ctx.pool.connect(ctx.bob).depositCollateral({ value: ethers.parseEther("10") });
+      await ctx.pool.connect(ctx.bob).borrow(ethers.parseEther("7.5"));
+      // HF at borrow = 10 * 0.8 / 7.5 = 1.0667. Push debt past 8 to make HF < 1.
+      // 5% APR ⇒ ~13.34% growth to go from 7.5 → ~8.5, i.e. ~32 months.
+      await time.increase(3 * 365 * 24 * 60 * 60);
+      await ctx.pool.pokeAccrual();
+      return ctx;
+    }
+
+    it("reverts on healthy position", async () => {
+      const { pool, alice, bob, liquidator } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("10") });
+      await pool.connect(bob).borrow(ethers.parseEther("5"));
+      await expect(
+        pool.connect(liquidator).liquidate(bob.address, { value: ethers.parseEther("1") }),
+      ).to.be.revertedWithCustomError(pool, "HealthyPosition");
+    });
+
+    it("reverts on user with no debt", async () => {
+      const { pool, alice, liquidator } = await deploy();
+      await expect(
+        pool.connect(liquidator).liquidate(alice.address, { value: ethers.parseEther("1") }),
+      ).to.be.revertedWithCustomError(pool, "NoDebt");
+    });
+
+    it("caps repayment at close factor (50% of debt)", async () => {
+      const { pool, bob, liquidator } = await unhealthy();
+      const debtBefore = await pool.debtOf(bob.address);
+      const overpay = debtBefore; // try to repay 100%
+      const tx = pool.connect(liquidator).liquidate(bob.address, { value: overpay });
+      await tx;
+      const debtAfter = await pool.debtOf(bob.address);
+      // ~half remains (within tiny accrual jitter from the liquidate-time accrue).
+      const expected = debtBefore / 2n;
+      const diff = debtAfter > expected ? debtAfter - expected : expected - debtAfter;
+      expect(diff).to.be.lt(debtBefore / 100n);
+    });
+
+    it("transfers collateral + 5% bonus to liquidator", async () => {
+      const { pool, bob, liquidator } = await unhealthy();
+      const debtBefore = await pool.debtOf(bob.address);
+      const repay = debtBefore / 2n; // exactly the close factor cap
+      const expectedSeize = (repay * (10000n + 500n)) / 10000n;
+
+      const collateralBefore = await pool.collateral(bob.address);
+      const tx = pool.connect(liquidator).liquidate(bob.address, { value: repay });
+      // Liquidator net: -repay + expectedSeize
+      await expect(tx).to.changeEtherBalance(liquidator, expectedSeize - repay);
+      await expect(tx).to.emit(pool, "Liquidated").withArgs(
+        liquidator.address,
+        bob.address,
+        repay,
+        expectedSeize,
+      );
+
+      expect(await pool.collateral(bob.address)).to.equal(collateralBefore - expectedSeize);
+    });
+
+    it("reverts when collateral insufficient to cover bonus", async () => {
+      // Construct a position where seizing collateral + bonus would exceed collateral balance.
+      const { pool, alice, bob, liquidator } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("100") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("10") });
+      await pool.connect(bob).borrow(ethers.parseEther("7.5"));
+      // Massive time jump to drive collateral underwater (debt >> collateral).
+      await time.increase(50 * 365 * 24 * 60 * 60);
+      await pool.pokeAccrual();
+      // Liquidator tries to repay debt/2 — seize would exceed collateral.
+      const debt = await pool.debtOf(bob.address);
+      await expect(
+        pool.connect(liquidator).liquidate(bob.address, { value: debt / 2n }),
+      ).to.be.revertedWithCustomError(pool, "InsufficientCollateral");
+    });
+  });
 });

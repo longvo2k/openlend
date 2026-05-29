@@ -199,6 +199,43 @@ contract LendingPool is ReentrancyGuard {
         emit Repaid(msg.sender, payment);
     }
 
+    // ----- Liquidation -----
+
+    function liquidate(address user) external payable nonReentrant {
+        if (msg.value == 0) revert ZeroAmount();
+        _accrueInterest();
+
+        uint256 debt = debtOf(user);
+        if (debt == 0) revert NoDebt();
+        if (healthFactor(user) >= WAD) revert HealthyPosition();
+
+        // Close factor cap.
+        uint256 maxRepay = (debt * CLOSE_FACTOR_BPS) / BPS_DENOM;
+        uint256 payment = msg.value > maxRepay ? maxRepay : msg.value;
+        uint256 refund = msg.value - payment;
+
+        // Seize collateral = payment * (1 + bonus).
+        uint256 seize = (payment * (BPS_DENOM + LIQ_BONUS_BPS)) / BPS_DENOM;
+        uint256 userCollateral = collateral[user];
+        if (seize > userCollateral) revert InsufficientCollateral();
+
+        // Update borrower debt.
+        uint256 remaining = debt - payment;
+        borrowed[user] = remaining;
+        userBorrowIndex[user] = remaining == 0 ? 0 : borrowIndex;
+        totalBorrowed -= payment;
+
+        // Move collateral.
+        collateral[user] = userCollateral - seize;
+
+        // Pay liquidator: seized collateral + any refund.
+        uint256 toLiquidator = seize + refund;
+        (bool ok, ) = msg.sender.call{value: toLiquidator}("");
+        if (!ok) revert TransferFailed();
+
+        emit Liquidated(msg.sender, user, payment, seize);
+    }
+
     // ----- Debt views (stub bodies; full logic added in Borrow task) -----
 
     function debtOf(address user) public view returns (uint256) {

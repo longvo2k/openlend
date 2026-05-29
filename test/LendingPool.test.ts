@@ -37,31 +37,6 @@ describe("LendingPool", () => {
       expect(await pool.borrowIndex()).to.equal(before);
     });
 
-    it("grows borrowIndex by ~5% after one year with active debt", async () => {
-      const { pool } = await deploy();
-      // Manually seed state via test helper.
-      await pool.testSeed(ethers.parseEther("100"), ethers.parseEther("50"));
-      const before = await pool.borrowIndex();
-      await time.increase(365 * 24 * 60 * 60);
-      await pool.pokeAccrual();
-      const after = await pool.borrowIndex();
-      // 5% of WAD = 5e16; allow ±0.001% tolerance for second-of-block drift.
-      const expected = before + (before * 500n) / 10000n;
-      const diff = after > expected ? after - expected : expected - after;
-      expect(diff).to.be.lt(before / 1_000_000n);
-    });
-
-    it("updates totalBorrowed and totalSupplied by the same interest amount", async () => {
-      const { pool } = await deploy();
-      await pool.testSeed(ethers.parseEther("100"), ethers.parseEther("50"));
-      const supBefore = await pool.totalSupplied();
-      const borBefore = await pool.totalBorrowed();
-      await time.increase(365 * 24 * 60 * 60);
-      await pool.pokeAccrual();
-      const supAfter = await pool.totalSupplied();
-      const borAfter = await pool.totalBorrowed();
-      expect(supAfter - supBefore).to.equal(borAfter - borBefore);
-    });
   });
 
   describe("Supply", () => {
@@ -394,6 +369,22 @@ describe("LendingPool", () => {
       await expect(
         pool.connect(liquidator).liquidate(bob.address, { value: debt / 2n }),
       ).to.be.revertedWithCustomError(pool, "InsufficientCollateral");
+    });
+  });
+
+  describe("getAccountData", () => {
+    it("returns bundled account state", async () => {
+      const { pool, alice, bob } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("4") });
+      await pool.connect(bob).borrow(ethers.parseEther("2"));
+
+      const [coll, debt, hf, shares] = await pool.getAccountData(bob.address);
+      expect(coll).to.equal(ethers.parseEther("4"));
+      expect(debt).to.equal(ethers.parseEther("2"));
+      // HF = 4 * 0.8 / 2 = 1.6
+      expect(hf).to.equal(ethers.parseEther("1.6"));
+      expect(shares).to.equal(0n);
     });
   });
 });

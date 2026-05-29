@@ -80,16 +80,6 @@ contract LendingPool is ReentrancyGuard {
         _accrueInterest();
     }
 
-    /// @dev Test-only seed for accrual tests. Hardhat chain only (31337).
-    ///      Removed entirely in Task 12 once real entry points exist.
-    function testSeed(uint256 supplied, uint256 borrowedAmt) external {
-        require(block.chainid == 31337, "test-only");
-        require(totalSupplied == 0 && totalBorrowed == 0, "already seeded");
-        totalSupplied = supplied;
-        totalBorrowed = borrowedAmt;
-        lastAccrual = block.timestamp;
-    }
-
     // ----- Views -----
 
     function exchangeRate() public view returns (uint256) {
@@ -255,5 +245,16 @@ contract LendingPool is ReentrancyGuard {
 
     function healthFactor(address user) public view returns (uint256) {
         return _healthFactorAfter(user, collateral[user], debtOf(user));
+    }
+
+    function getAccountData(address user)
+        external
+        view
+        returns (uint256 userCollateral, uint256 userDebt, uint256 hf, uint256 shares)
+    {
+        userCollateral = collateral[user];
+        userDebt = debtOf(user);
+        hf = healthFactor(user);
+        shares = supplyShares[user];
     }
 }

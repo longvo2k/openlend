@@ -1,0 +1,27 @@
+{
+  "name": "openlend",
+  "version": "0.1.0",
+  "description": "Minimal single-asset borrow/lend pool on IOPN testnet",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network iopnTestnet",
+    "supply": "hardhat run scripts/supply.ts --network iopnTestnet",
+    "withdraw": "hardhat run scripts/withdraw.ts --network iopnTestnet",
+    "borrow": "hardhat run scripts/borrow.ts --network iopnTestnet",
+    "repay": "hardhat run scripts/repay.ts --network iopnTestnet",
+    "liquidate": "hardhat run scripts/liquidate.ts --network iopnTestnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@types/node": "^20.11.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.0",
+    "solidity-coverage": "^0.8.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}

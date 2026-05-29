@@ -144,6 +144,19 @@ describe("LendingPool", () => {
         pool.connect(alice).withdrawCollateral(ethers.parseEther("2")),
       ).to.be.revertedWithCustomError(pool, "InsufficientCollateral");
     });
+
+    it("reverts when withdrawing collateral would break health factor", async () => {
+      const { pool, alice, bob } = await deploy();
+      // Alice supplies pool liquidity so Bob can borrow.
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      // Bob posts 4 OPN collateral and borrows 3 OPN (75% LTV).
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("4") });
+      await pool.connect(bob).borrow(ethers.parseEther("3"));
+      // Trying to withdraw any collateral would drop HF below 1.0.
+      await expect(
+        pool.connect(bob).withdrawCollateral(ethers.parseEther("1")),
+      ).to.be.revertedWithCustomError(pool, "Undercollateralized");
+    });
   });
 
   describe("Borrow", () => {

@@ -1,13 +1,14 @@
-# IOPN Lending — Design Spec
+# OpenLend — Design Spec
 
+**Project:** OpenLend (npm: `openlend`)
 **Date:** 2026-05-29
 **Status:** Approved (v1)
 **Owner:** vvlong.2k@gmail.com
 
 ## 1. Purpose
 
-A minimal, educational DeFi borrow-and-lend protocol deployed on the IOPN
-testnet. Users supply native OPN to earn yield; borrowers post OPN as
+**OpenLend** is a minimal, educational DeFi borrow-and-lend protocol
+deployed on the IOPN testnet. Users supply native OPN to earn yield; borrowers post OPN as
 collateral and borrow OPN at a fixed interest rate. Liquidators can close
 unhealthy positions for a bonus.
 
@@ -62,7 +63,7 @@ iopn-builders/
 ├── deployments/                # gitignored except .gitkeep
 │   └── iopnTestnet.json        # written on deploy
 ├── docs/
-│   └── superpowers/specs/2026-05-29-iopn-lending-design.md
+│   └── superpowers/specs/2026-05-29-iopn-lending-design.md   # OpenLend spec
 ├── hardhat.config.ts
 ├── tsconfig.json
 ├── package.json

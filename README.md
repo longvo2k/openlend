@@ -24,7 +24,7 @@ can be liquidated (50% close factor, 5% bonus to liquidator).
 
 ```bash
 git clone <this repo>
-cd iopn-builders
+cd openlend
 npm install
 cp .env.example .env
 # edit .env: set PRIVATE_KEY (testnet only — never use a mainnet key)

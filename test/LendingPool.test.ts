@@ -387,4 +387,20 @@ describe("LendingPool", () => {
       expect(shares).to.equal(0n);
     });
   });
+
+  describe("Reentrancy", () => {
+    it("blocks reentry into withdraw via malicious receiver", async () => {
+      const { pool, alice } = await deploy();
+      // Seed the pool so reentrancy would have something to drain.
+      await pool.connect(alice).supply({ value: ethers.parseEther("5") });
+
+      const Attacker = await ethers.getContractFactory("MaliciousReceiver");
+      const attacker = await Attacker.deploy(await pool.getAddress());
+      await attacker.waitForDeployment();
+
+      // The attack tries to supply then withdraw with re-entry on receive().
+      // ReentrancyGuard must cause the inner withdraw to revert, bubbling up.
+      await expect(attacker.attack({ value: ethers.parseEther("1") })).to.be.reverted;
+    });
+  });
 });

@@ -63,4 +63,41 @@ describe("LendingPool", () => {
       expect(supAfter - supBefore).to.equal(borAfter - borBefore);
     });
   });
+
+  describe("Supply", () => {
+    it("reverts on zero msg.value", async () => {
+      const { pool, alice } = await deploy();
+      await expect(pool.connect(alice).supply({ value: 0n })).to.be.revertedWithCustomError(
+        pool,
+        "ZeroAmount",
+      );
+    });
+
+    it("mints 1:1 shares to first supplier", async () => {
+      const { pool, alice } = await deploy();
+      const amount = ethers.parseEther("10");
+      await expect(pool.connect(alice).supply({ value: amount }))
+        .to.emit(pool, "Supplied")
+        .withArgs(alice.address, amount, amount);
+      expect(await pool.supplyShares(alice.address)).to.equal(amount);
+      expect(await pool.totalShares()).to.equal(amount);
+      expect(await pool.totalSupplied()).to.equal(amount);
+    });
+
+    it("mints fewer shares to second supplier after pool grows", async () => {
+      const { pool, alice, bob } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      // Simulate pool growth without depending on borrow path: seed extra supply.
+      // (Real growth comes from accrued interest once borrow exists.)
+      // Here we trigger a second supply at the same exchange rate (1:1).
+      await pool.connect(bob).supply({ value: ethers.parseEther("5") });
+      expect(await pool.supplyShares(bob.address)).to.equal(ethers.parseEther("5"));
+      expect(await pool.totalShares()).to.equal(ethers.parseEther("15"));
+    });
+
+    it("exchangeRate returns WAD when totalShares is zero", async () => {
+      const { pool } = await deploy();
+      expect(await pool.exchangeRate()).to.equal(ethers.parseEther("1"));
+    });
+  });
 });

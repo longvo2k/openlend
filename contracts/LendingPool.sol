@@ -89,4 +89,23 @@ contract LendingPool is ReentrancyGuard {
         totalBorrowed = borrowedAmt;
         lastAccrual = block.timestamp;
     }
+
+    // ----- Views -----
+
+    function exchangeRate() public view returns (uint256) {
+        if (totalShares == 0) return WAD;
+        return (totalSupplied * WAD) / totalShares;
+    }
+
+    // ----- Supply -----
+
+    function supply() external payable nonReentrant {
+        if (msg.value == 0) revert ZeroAmount();
+        _accrueInterest();
+        uint256 shares = (msg.value * WAD) / exchangeRate();
+        supplyShares[msg.sender] += shares;
+        totalShares += shares;
+        totalSupplied += msg.value;
+        emit Supplied(msg.sender, msg.value, shares);
+    }
 }

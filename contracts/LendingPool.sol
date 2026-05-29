@@ -55,6 +55,8 @@ contract LendingPool is ReentrancyGuard {
 
     // ----- Interest accrual -----
 
+    /// @dev Lazy linear interest accrual. Updates totalBorrowed, totalSupplied,
+    ///      and the global borrowIndex based on elapsed time since lastAccrual.
     function _accrueInterest() internal {
         uint256 dt = block.timestamp - lastAccrual;
         if (dt == 0 || totalBorrowed == 0) {
@@ -78,8 +80,10 @@ contract LendingPool is ReentrancyGuard {
         _accrueInterest();
     }
 
-    /// @dev Test-only seed for accrual tests. NOT for production use.
+    /// @dev Test-only seed for accrual tests. Hardhat chain only (31337).
+    ///      Removed entirely in Task 12 once real entry points exist.
     function testSeed(uint256 supplied, uint256 borrowedAmt) external {
+        require(block.chainid == 31337, "test-only");
         require(totalSupplied == 0 && totalBorrowed == 0, "already seeded");
         totalSupplied = supplied;
         totalBorrowed = borrowedAmt;

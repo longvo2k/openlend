@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ConnectGate } from '../components/ConnectGate';
 import { PoolStats } from '../components/PoolStats';
@@ -9,10 +10,19 @@ import { ActionPanel } from '../components/ActionPanel';
 export default function Home() {
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">OpenLend</h1>
-          <p className="text-sm text-zinc-400">Single-asset borrow/lend on IOPN testnet</p>
+      <header className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 min-w-0">
+          <Image
+            src="/logo.png"
+            alt="OpenLend"
+            width={400}
+            height={120}
+            priority
+            className="h-10 w-auto"
+          />
+          <span className="hidden border-l border-zinc-800 pl-4 text-xs text-zinc-500 sm:inline">
+            Single-asset borrow/lend on IOPN testnet
+          </span>
         </div>
         <ConnectButton />
       </header>

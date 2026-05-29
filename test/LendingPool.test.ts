@@ -134,20 +134,8 @@ describe("LendingPool", () => {
       ).to.be.revertedWithCustomError(pool, "InsufficientLiquidity"); // amount > availableLiquidity
     });
 
-    it("reverts when contract balance < requested amount", async () => {
-      // We seed pool accounting to claim more underlying than the contract holds.
-      const { pool, alice } = await deploy();
-      // Fresh pool: seed accounting to look like 10 ETH supplied with 1 share.
-      // Then withdraw the share — accounting says 10 ETH owed, contract holds 0.
-      await pool.testSeed(ethers.parseEther("10"), 0n);
-      // testSeed doesn't touch totalShares; mint shares manually via a real supply.
-      // Simpler: trigger the no-liquidity branch by having available < requested.
-      // Skip artificial setup and verify the explicit InsufficientLiquidity revert
-      // through a later integration test in Task 8 (Borrow). For now: trivial
-      // check that totalSupplied tracks correctly after withdraw.
-      // (No assertion here beyond compile; this 'it' will be replaced in Task 8.)
-    });
   });
+
 
   describe("Collateral", () => {
     it("reverts on zero msg.value", async () => {
@@ -180,6 +168,62 @@ describe("LendingPool", () => {
       await expect(
         pool.connect(alice).withdrawCollateral(ethers.parseEther("2")),
       ).to.be.revertedWithCustomError(pool, "InsufficientCollateral");
+    });
+  });
+
+  describe("Borrow", () => {
+    async function suppliedAndCollateralized() {
+      const ctx = await deploy();
+      // Alice supplies pool liquidity.
+      await ctx.pool.connect(ctx.alice).supply({ value: ethers.parseEther("10") });
+      // Bob posts collateral.
+      await ctx.pool.connect(ctx.bob).depositCollateral({ value: ethers.parseEther("10") });
+      return ctx;
+    }
+
+    it("reverts on zero amount", async () => {
+      const { pool, bob } = await suppliedAndCollateralized();
+      await expect(pool.connect(bob).borrow(0n)).to.be.revertedWithCustomError(pool, "ZeroAmount");
+    });
+
+    it("allows borrow up to 75% LTV", async () => {
+      const { pool, bob } = await suppliedAndCollateralized();
+      const max = ethers.parseEther("7.5");
+      await expect(pool.connect(bob).borrow(max)).to.changeEtherBalance(bob, max);
+      expect(await pool.debtOf(bob.address)).to.equal(max);
+      expect(await pool.totalBorrowed()).to.equal(max);
+    });
+
+    it("reverts when borrow would exceed 75% LTV", async () => {
+      const { pool, bob } = await suppliedAndCollateralized();
+      await expect(
+        pool.connect(bob).borrow(ethers.parseEther("7.6")),
+      ).to.be.revertedWithCustomError(pool, "Undercollateralized");
+    });
+
+    it("reverts on insufficient pool liquidity", async () => {
+      const { pool, bob } = await suppliedAndCollateralized();
+      // Pool has 10 OPN supplied. Bob's collateral allows borrowing 7.5.
+      // Force the liquidity branch by having Bob over-collateralize first
+      // so LTV permits more than pool holds.
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("100") });
+      // Now collateral = 110, max borrow = 82.5, but pool only has 10.
+      await expect(
+        pool.connect(bob).borrow(ethers.parseEther("10.1")),
+      ).to.be.revertedWithCustomError(pool, "InsufficientLiquidity");
+    });
+  });
+
+  describe("Withdraw liquidity branch (deferred from Task 6)", () => {
+    it("blocks supplier withdraw when liquidity is locked by a borrow", async () => {
+      const { pool, alice, bob } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("10") });
+      await pool.connect(bob).borrow(ethers.parseEther("7"));
+      // 3 OPN free; trying to withdraw 4 OPN worth of shares fails.
+      await expect(
+        pool.connect(alice).withdraw(ethers.parseEther("4")),
+      ).to.be.revertedWithCustomError(pool, "InsufficientLiquidity");
     });
   });
 });

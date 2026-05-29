@@ -150,6 +150,31 @@ contract LendingPool is ReentrancyGuard {
         emit CollateralWithdrawn(msg.sender, amount);
     }
 
+    // ----- Borrow -----
+
+    function borrow(uint256 amount) external nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+        _accrueInterest();
+        if (amount > availableLiquidity()) revert InsufficientLiquidity();
+
+        // Snapshot current debt to user accounting.
+        uint256 currentDebt = debtOf(msg.sender);
+        uint256 newDebt = currentDebt + amount;
+
+        // LTV check at borrow time (stricter than liquidation threshold).
+        uint256 maxBorrow = (collateral[msg.sender] * LTV_BPS) / BPS_DENOM;
+        if (newDebt > maxBorrow) revert Undercollateralized();
+
+        // Persist user debt at current borrowIndex.
+        borrowed[msg.sender] = newDebt;
+        userBorrowIndex[msg.sender] = borrowIndex;
+        totalBorrowed += amount;
+
+        (bool ok, ) = msg.sender.call{value: amount}("");
+        if (!ok) revert TransferFailed();
+        emit Borrowed(msg.sender, amount);
+    }
+
     // ----- Debt views (stub bodies; full logic added in Borrow task) -----
 
     function debtOf(address user) public view returns (uint256) {

@@ -108,4 +108,21 @@ contract LendingPool is ReentrancyGuard {
         totalSupplied += msg.value;
         emit Supplied(msg.sender, msg.value, shares);
     }
+
+    function withdraw(uint256 shares) external nonReentrant {
+        if (shares == 0) revert ZeroAmount();
+        _accrueInterest();
+        uint256 amount = (shares * totalSupplied) / totalShares;
+        if (amount > availableLiquidity()) revert InsufficientLiquidity();
+        supplyShares[msg.sender] -= shares; // panics on overflow if user has fewer
+        totalShares -= shares;
+        totalSupplied -= amount;
+        (bool ok, ) = msg.sender.call{value: amount}("");
+        if (!ok) revert TransferFailed();
+        emit Withdrawn(msg.sender, amount, shares);
+    }
+
+    function availableLiquidity() public view returns (uint256) {
+        return totalSupplied - totalBorrowed;
+    }
 }

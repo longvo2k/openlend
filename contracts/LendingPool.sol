@@ -36,8 +36,6 @@ contract LendingPool is ReentrancyGuard {
     error HealthyPosition();
     error NoDebt();
     error TransferFailed();
-    error ExcessRepayment();
-
     // ----- Events -----
     event Supplied(address indexed user, uint256 amount, uint256 shares);
     event Withdrawn(address indexed user, uint256 amount, uint256 shares);
@@ -130,11 +128,11 @@ contract LendingPool is ReentrancyGuard {
         _accrueInterest();
         uint256 bal = collateral[msg.sender];
         if (amount > bal) revert InsufficientCollateral();
-        // Health check is enforced only when user has debt; debt path lands in Task 8.
-        collateral[msg.sender] = bal - amount;
-        if (_healthFactorAfter(msg.sender, collateral[msg.sender], debtOf(msg.sender)) < WAD) {
+        uint256 newCollateral = bal - amount;
+        if (_healthFactorAfter(msg.sender, newCollateral, debtOf(msg.sender)) < WAD) {
             revert Undercollateralized();
         }
+        collateral[msg.sender] = newCollateral;
         (bool ok, ) = msg.sender.call{value: amount}("");
         if (!ok) revert TransferFailed();
         emit CollateralWithdrawn(msg.sender, amount);
@@ -226,7 +224,7 @@ contract LendingPool is ReentrancyGuard {
         emit Liquidated(msg.sender, user, payment, seize);
     }
 
-    // ----- Debt views (stub bodies; full logic added in Borrow task) -----
+    // ----- Debt + health factor views -----
 
     function debtOf(address user) public view returns (uint256) {
         uint256 principal = borrowed[user];

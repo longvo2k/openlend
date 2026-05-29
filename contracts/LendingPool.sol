@@ -215,4 +215,8 @@ contract LendingPool is ReentrancyGuard {
         if (newDebt == 0) return type(uint256).max;
         return (newCollateral * LIQ_THRESHOLD_BPS * WAD) / (newDebt * BPS_DENOM);
     }
+
+    function healthFactor(address user) public view returns (uint256) {
+        return _healthFactorAfter(user, collateral[user], debtOf(user));
+    }
 }

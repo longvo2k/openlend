@@ -271,4 +271,48 @@ describe("LendingPool", () => {
       ).to.be.revertedWithCustomError(pool, "InsufficientLiquidity");
     });
   });
+
+  describe("Interest end-to-end", () => {
+    it("suppliers earn ~5% APR after one year", async () => {
+      const { pool, alice, bob } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("100") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("100") });
+      await pool.connect(bob).borrow(ethers.parseEther("50"));
+
+      await time.increase(365 * 24 * 60 * 60);
+      await pool.pokeAccrual();
+
+      // Borrower debt grew 5% of 50 = 2.5.
+      const debt = await pool.debtOf(bob.address);
+      const expectedDebt = ethers.parseEther("52.5");
+      const debtDiff = debt > expectedDebt ? debt - expectedDebt : expectedDebt - debt;
+      expect(debtDiff).to.be.lt(ethers.parseEther("0.001"));
+
+      // Supplier underlying grew by 2.5.
+      const aliceShares = await pool.supplyShares(alice.address);
+      const aliceUnderlying = (aliceShares * (await pool.totalSupplied())) / (await pool.totalShares());
+      const expectedUnderlying = ethers.parseEther("102.5");
+      const supDiff =
+        aliceUnderlying > expectedUnderlying
+          ? aliceUnderlying - expectedUnderlying
+          : expectedUnderlying - aliceUnderlying;
+      expect(supDiff).to.be.lt(ethers.parseEther("0.001"));
+    });
+  });
+
+  describe("healthFactor view", () => {
+    it("returns max uint when user has no debt", async () => {
+      const { pool, alice } = await deploy();
+      expect(await pool.healthFactor(alice.address)).to.equal(ethers.MaxUint256);
+    });
+
+    it("returns >= WAD for a healthy position", async () => {
+      const { pool, alice, bob } = await deploy();
+      await pool.connect(alice).supply({ value: ethers.parseEther("10") });
+      await pool.connect(bob).depositCollateral({ value: ethers.parseEther("10") });
+      await pool.connect(bob).borrow(ethers.parseEther("5"));
+      // HF = 10 * 0.8 / 5 = 1.6 → 1.6e18
+      expect(await pool.healthFactor(bob.address)).to.equal(ethers.parseEther("1.6"));
+    });
+  });
 });

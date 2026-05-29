@@ -52,4 +52,37 @@ contract LendingPool is ReentrancyGuard {
         borrowIndex = WAD;
         lastAccrual = block.timestamp;
     }
+
+    // ----- Interest accrual -----
+
+    function _accrueInterest() internal {
+        uint256 dt = block.timestamp - lastAccrual;
+        if (dt == 0 || totalBorrowed == 0) {
+            lastAccrual = block.timestamp;
+            return;
+        }
+        // interestFactor = RATE_BPS * dt * WAD / (SECONDS_PER_YEAR * BPS_DENOM)
+        uint256 interestFactor = (RATE_BPS * dt * WAD) / (SECONDS_PER_YEAR * BPS_DENOM);
+        uint256 interest = (totalBorrowed * interestFactor) / WAD;
+        totalBorrowed += interest;
+        totalSupplied += interest;
+        borrowIndex += (borrowIndex * interestFactor) / WAD;
+        lastAccrual = block.timestamp;
+        emit InterestAccrued(interest, borrowIndex);
+    }
+
+    /// @dev Test-only entry point so tests can advance accrual without
+    ///      requiring supply/borrow paths to already exist. Safe to leave
+    ///      in production: it only triggers accrual, never moves funds.
+    function pokeAccrual() external {
+        _accrueInterest();
+    }
+
+    /// @dev Test-only seed for accrual tests. NOT for production use.
+    function testSeed(uint256 supplied, uint256 borrowedAmt) external {
+        require(totalSupplied == 0 && totalBorrowed == 0, "already seeded");
+        totalSupplied = supplied;
+        totalBorrowed = borrowedAmt;
+        lastAccrual = block.timestamp;
+    }
 }

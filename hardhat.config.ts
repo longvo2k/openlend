@@ -17,6 +17,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       chainId: 31337,
+      allowBlocksWithSameTimestamp: true,
     },
     iopnTestnet: {
       url: IOPN_RPC_URL,

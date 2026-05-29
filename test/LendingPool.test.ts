@@ -214,6 +214,51 @@ describe("LendingPool", () => {
     });
   });
 
+  describe("Repay", () => {
+    async function indebted() {
+      const ctx = await deploy();
+      await ctx.pool.connect(ctx.alice).supply({ value: ethers.parseEther("10") });
+      await ctx.pool.connect(ctx.bob).depositCollateral({ value: ethers.parseEther("10") });
+      await ctx.pool.connect(ctx.bob).borrow(ethers.parseEther("5"));
+      return ctx;
+    }
+
+    it("reverts on zero msg.value", async () => {
+      const { pool, bob } = await indebted();
+      await expect(pool.connect(bob).repay({ value: 0n })).to.be.revertedWithCustomError(
+        pool,
+        "ZeroAmount",
+      );
+    });
+
+    it("reverts when user has no debt", async () => {
+      const { pool, liquidator } = await indebted();
+      await expect(
+        pool.connect(liquidator).repay({ value: ethers.parseEther("1") }),
+      ).to.be.revertedWithCustomError(pool, "NoDebt");
+    });
+
+    it("reduces debt on partial repay", async () => {
+      const { pool, bob } = await indebted();
+      // Pin repay to same timestamp as last accrual so dt==0 and no extra interest.
+      await time.setNextBlockTimestamp(await pool.lastAccrual());
+      await pool.connect(bob).repay({ value: ethers.parseEther("2") });
+      expect(await pool.debtOf(bob.address)).to.equal(ethers.parseEther("3"));
+    });
+
+    it("clears debt and refunds excess on full repay", async () => {
+      const { pool, bob } = await indebted();
+      // Pin repay to same timestamp as last accrual so dt==0 and no extra interest.
+      await time.setNextBlockTimestamp(await pool.lastAccrual());
+      const debt = await pool.debtOf(bob.address);
+      const overpay = debt + ethers.parseEther("1");
+      // Bob should net out exactly -debt (the +1 refunded).
+      await expect(pool.connect(bob).repay({ value: overpay })).to.changeEtherBalance(bob, -debt);
+      expect(await pool.debtOf(bob.address)).to.equal(0n);
+      expect(await pool.borrowed(bob.address)).to.equal(0n);
+    });
+  });
+
   describe("Withdraw liquidity branch (deferred from Task 6)", () => {
     it("blocks supplier withdraw when liquidity is locked by a borrow", async () => {
       const { pool, alice, bob } = await deploy();

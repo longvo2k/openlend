@@ -175,6 +175,30 @@ contract LendingPool is ReentrancyGuard {
         emit Borrowed(msg.sender, amount);
     }
 
+    // ----- Repay -----
+
+    function repay() external payable nonReentrant {
+        if (msg.value == 0) revert ZeroAmount();
+        _accrueInterest();
+        uint256 debt = debtOf(msg.sender);
+        if (debt == 0) revert NoDebt();
+
+        uint256 payment = msg.value > debt ? debt : msg.value;
+        uint256 refund = msg.value - payment;
+
+        // Update user debt: principal = remaining debt at current index.
+        uint256 remaining = debt - payment;
+        borrowed[msg.sender] = remaining;
+        userBorrowIndex[msg.sender] = remaining == 0 ? 0 : borrowIndex;
+        totalBorrowed -= payment;
+
+        if (refund > 0) {
+            (bool ok, ) = msg.sender.call{value: refund}("");
+            if (!ok) revert TransferFailed();
+        }
+        emit Repaid(msg.sender, payment);
+    }
+
     // ----- Debt views (stub bodies; full logic added in Borrow task) -----
 
     function debtOf(address user) public view returns (uint256) {

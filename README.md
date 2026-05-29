@@ -69,6 +69,29 @@ npm run repay -- 1
 npm run liquidate -- 0xUserAddress 0.5
 ```
 
+## Frontend (optional UI)
+
+A minimal Next.js dApp lives in `frontend/`. To run it:
+
+```bash
+# Pre-req: contracts compiled and deployed at least once for the target chain.
+npm run compile
+npm run deploy:testnet   # (or: npx hardhat run scripts/deploy.ts --network localhost)
+
+cd frontend
+cp .env.example .env     # optional — only needed for WalletConnect v2 support
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. Connect a wallet (MetaMask, RainbowKit-supported)
+and either approve the IOPN Testnet network prompt or switch manually.
+The dApp reads pool/account state directly from the deployed contract via
+`deployments/iopnTestnet.json`.
+
+Stack: Next.js 14 + wagmi v2 + RainbowKit + Tailwind. See
+[frontend spec](docs/superpowers/specs/2026-05-29-openlend-frontend-design.md).
+
 ## Parameters
 
 | Param                   | Value | |

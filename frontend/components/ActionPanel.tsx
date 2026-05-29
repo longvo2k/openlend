@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   useAccount,
+  useBalance,
   useChainId,
   useReadContract,
   useWriteContract,
@@ -20,63 +21,117 @@ interface Props {
   kind: Kind;
 }
 
+const ACCENT: Record<
+  Kind,
+  { text: string; bar: string; iconBg: string }
+> = {
+  supply: {
+    text: 'text-emerald-400',
+    bar: 'from-emerald-500/60',
+    iconBg: 'bg-emerald-500/10',
+  },
+  withdraw: {
+    text: 'text-sky-400',
+    bar: 'from-sky-500/60',
+    iconBg: 'bg-sky-500/10',
+  },
+  borrow: {
+    text: 'text-amber-400',
+    bar: 'from-amber-500/60',
+    iconBg: 'bg-amber-500/10',
+  },
+  repay: {
+    text: 'text-violet-400',
+    bar: 'from-violet-500/60',
+    iconBg: 'bg-violet-500/10',
+  },
+};
+
 const META: Record<
   Kind,
   {
     title: string;
-    primaryLabel: string;
-    secondaryLabel?: string;
-    primaryPlaceholder: string;
-    secondaryPlaceholder?: string;
     description: string;
+    primaryLabel: string;
+    primaryUnit: 'OPN' | 'shares';
+    primaryMaxLabel: string;
+    secondaryLabel?: string;
+    secondaryUnit?: 'OPN';
+    ctaLabel: string;
+    icon: string;
   }
 > = {
   supply: {
     title: 'Supply',
-    primaryLabel: 'OPN to supply',
-    primaryPlaceholder: '0.0',
-    description: 'Deposit OPN into the pool. Receive shares; earn 5% APR.',
+    description: 'Deposit OPN. Earn 5% APR (linear).',
+    primaryLabel: 'Amount to supply',
+    primaryUnit: 'OPN',
+    primaryMaxLabel: 'Wallet',
+    ctaLabel: 'Supply',
+    icon: '↓',
   },
   withdraw: {
     title: 'Withdraw',
+    description: 'Burn shares. Redeem OPN + accrued interest.',
     primaryLabel: 'Shares to burn',
-    primaryPlaceholder: '0.0',
-    description: 'Burn shares to redeem underlying OPN + accrued interest.',
+    primaryUnit: 'shares',
+    primaryMaxLabel: 'Available',
+    ctaLabel: 'Withdraw',
+    icon: '↑',
   },
   borrow: {
     title: 'Borrow',
-    primaryLabel: 'Collateral OPN to add',
-    secondaryLabel: 'OPN to borrow',
-    primaryPlaceholder: '0.0',
-    secondaryPlaceholder: '0.0',
-    description: 'Deposit collateral and borrow OPN (up to 75% LTV).',
+    description: 'Post OPN collateral, borrow OPN (≤75% LTV).',
+    primaryLabel: 'Collateral to add',
+    primaryUnit: 'OPN',
+    primaryMaxLabel: 'Wallet',
+    secondaryLabel: 'Amount to borrow',
+    secondaryUnit: 'OPN',
+    ctaLabel: 'Borrow',
+    icon: '↗',
   },
   repay: {
     title: 'Repay',
-    primaryLabel: 'OPN to repay',
-    primaryPlaceholder: '0.0',
-    description: 'Repay outstanding debt. Excess refunded.',
+    description: 'Pay down debt. Excess refunded.',
+    primaryLabel: 'Amount to repay',
+    primaryUnit: 'OPN',
+    primaryMaxLabel: 'Outstanding',
+    ctaLabel: 'Repay',
+    icon: '✓',
   },
 };
 
+// Leave a small reserve so MAX doesn't leave the wallet with zero for gas.
+const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+
 export function ActionPanel({ kind }: Props) {
   const meta = META[kind];
+  const accent = ACCENT[kind];
   const chainId = useChainId();
   const pool = getLendingPoolAddress(chainId);
   const publicClient = usePublicClient();
   const { address: user } = useAccount();
+
   const [primary, setPrimary] = useState('');
   const [secondary, setSecondary] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [phase, setPhase] = useState<'idle' | 'signing' | 'pending' | 'success'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'signing' | 'pending' | 'success'>(
+    'idle',
+  );
 
   const { writeContractAsync, data: txHash, reset } = useWriteContract();
-  const { isLoading: receiptLoading, isSuccess: receiptSuccess } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  const { isLoading: receiptLoading, isSuccess: receiptSuccess } =
+    useWaitForTransactionReceipt({ hash: txHash });
 
-  // Max-withdrawable = current supplyShares balance.
-  const { data: maxWithdrawSharesRaw } = useReadContract({
+  // Per-kind reads for the Available / MAX hint.
+  const { data: bal } = useBalance({
+    address: user,
+    query: {
+      enabled: Boolean((kind === 'supply' || kind === 'borrow') && user),
+      refetchInterval: 5000,
+    },
+  });
+  const { data: sharesRaw } = useReadContract({
     address: pool ?? undefined,
     abi: lendingPoolAbi,
     functionName: 'supplyShares',
@@ -86,7 +141,27 @@ export function ActionPanel({ kind }: Props) {
       refetchInterval: 5000,
     },
   });
-  const maxWithdrawShares = maxWithdrawSharesRaw as bigint | undefined;
+  const { data: debtRaw } = useReadContract({
+    address: pool ?? undefined,
+    abi: lendingPoolAbi,
+    functionName: 'debtOf',
+    args: user ? [user] : undefined,
+    query: {
+      enabled: Boolean(kind === 'repay' && user && pool),
+      refetchInterval: 5000,
+    },
+  });
+
+  const primaryMax: bigint | undefined = useMemo(() => {
+    if (kind === 'supply' || kind === 'borrow') {
+      if (!bal) return undefined;
+      const m = bal.value - GAS_RESERVE_WEI;
+      return m > 0n ? m : 0n;
+    }
+    if (kind === 'withdraw') return sharesRaw as bigint | undefined;
+    if (kind === 'repay') return debtRaw as bigint | undefined;
+    return undefined;
+  }, [kind, bal, sharesRaw, debtRaw]);
 
   const reload = () => {
     setError(null);
@@ -133,7 +208,9 @@ export function ActionPanel({ kind }: Props) {
       } else if (kind === 'borrow') {
         const collateral = parseOPN(primary);
         const amount = parseOPN(secondary);
-        if (collateral <= 0n || amount <= 0n) throw new Error('Both amounts must be > 0');
+        if (collateral <= 0n || amount <= 0n) {
+          throw new Error('Both amounts must be > 0');
+        }
         const h1 = await writeContractAsync({
           address: pool,
           abi: lendingPoolAbi,
@@ -166,87 +243,88 @@ export function ActionPanel({ kind }: Props) {
       setPhase('success');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      // User rejected in wallet → friendlier message.
       setError(msg.includes('User rejected') ? 'Rejected in wallet.' : msg);
       setPhase('idle');
     }
   };
 
   const status =
-    error ? `Error: ${error}` :
-    phase === 'signing' ? 'Confirm in wallet…' :
-    phase === 'pending' ? 'Pending…' :
-    phase === 'success' ? 'Confirmed ✓' :
-    '';
+    error
+      ? `Error: ${error}`
+      : phase === 'signing'
+      ? 'Confirm in wallet…'
+      : phase === 'pending'
+      ? 'Pending…'
+      : phase === 'success'
+      ? 'Confirmed ✓'
+      : '';
 
-  const explorer = txHash ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}` : null;
+  const explorer = txHash
+    ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}`
+    : null;
 
   const busy = phase === 'signing' || phase === 'pending';
 
   return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <h3 className="text-lg font-semibold mb-1">{meta.title}</h3>
-      <p className="text-sm text-zinc-400 mb-4">{meta.description}</p>
-      <div className="space-y-3">
-        <label className="block">
-          <span className="text-xs uppercase tracking-wide text-zinc-500">{meta.primaryLabel}</span>
-          <input
-            value={primary}
-            onChange={(e) => setPrimary(e.target.value)}
-            placeholder={meta.primaryPlaceholder}
-            inputMode="decimal"
+    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accent.bar} via-transparent to-transparent`}
+      />
+
+      <header className="flex items-start gap-3 mb-1">
+        <div
+          className={`flex h-9 w-9 items-center justify-center rounded-lg ${accent.iconBg} ${accent.text} text-lg font-bold`}
+        >
+          {meta.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold leading-tight">{meta.title}</h3>
+          <p className="mt-0.5 text-sm text-zinc-400">{meta.description}</p>
+        </div>
+      </header>
+
+      <div className="mt-5 space-y-4">
+        <Field
+          label={meta.primaryLabel}
+          unit={meta.primaryUnit}
+          value={primary}
+          onChange={setPrimary}
+          disabled={busy}
+          maxLabel={meta.primaryMaxLabel}
+          maxValue={primaryMax}
+          maxAccent={accent.text}
+          onMax={() => primaryMax && setPrimary(formatUnits(primaryMax, 18))}
+        />
+
+        {meta.secondaryLabel && meta.secondaryUnit && (
+          <Field
+            label={meta.secondaryLabel}
+            unit={meta.secondaryUnit}
+            value={secondary}
+            onChange={setSecondary}
             disabled={busy}
-            className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 outline-none focus:border-emerald-500 disabled:opacity-50"
           />
-        </label>
-        {kind === 'withdraw' && (
-          <div className="-mt-2 flex items-center justify-between text-xs">
-            <span className="text-zinc-500">
-              Available: {maxWithdrawShares === undefined ? '—' : `${formatOPN(maxWithdrawShares)} shares`}
-            </span>
-            <button
-              type="button"
-              disabled={busy || !maxWithdrawShares || maxWithdrawShares === 0n}
-              onClick={() =>
-                maxWithdrawShares && setPrimary(formatUnits(maxWithdrawShares, 18))
-              }
-              className="font-medium uppercase tracking-wide text-emerald-400 hover:text-emerald-300 disabled:text-zinc-600 disabled:cursor-not-allowed"
-            >
-              Max
-            </button>
-          </div>
         )}
-        {meta.secondaryLabel && (
-          <label className="block">
-            <span className="text-xs uppercase tracking-wide text-zinc-500">{meta.secondaryLabel}</span>
-            <input
-              value={secondary}
-              onChange={(e) => setSecondary(e.target.value)}
-              placeholder={meta.secondaryPlaceholder}
-              inputMode="decimal"
-              disabled={busy}
-              className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3 py-2 outline-none focus:border-emerald-500 disabled:opacity-50"
-            />
-          </label>
-        )}
+
         <button
           onClick={onSubmit}
           disabled={busy || !pool}
-          className="w-full rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-medium px-4 py-2"
+          className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500"
         >
-          {busy ? '…' : meta.title}
+          {busy ? 'Working…' : meta.ctaLabel}
         </button>
+
         {status && (
-          <div className="text-sm text-zinc-400 flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
             <span>{status}</span>
             {explorer && (
               <a
-                className="text-emerald-400 underline"
+                className={`underline ${accent.text} hover:opacity-80`}
                 target="_blank"
                 rel="noopener noreferrer"
                 href={explorer}
               >
-                tx
+                view tx ↗
               </a>
             )}
             {phase === 'success' && (
@@ -257,8 +335,79 @@ export function ActionPanel({ kind }: Props) {
           </div>
         )}
       </div>
+
       {/* Touched only to satisfy the linter — these hooks drive the wagmi cache invalidation. */}
-      <span className="hidden">{receiptLoading ? '1' : '0'}{receiptSuccess ? '1' : '0'}</span>
+      <span className="hidden">
+        {receiptLoading ? '1' : '0'}
+        {receiptSuccess ? '1' : '0'}
+      </span>
     </section>
+  );
+}
+
+interface FieldProps {
+  label: string;
+  unit: 'OPN' | 'shares';
+  value: string;
+  onChange: (s: string) => void;
+  disabled: boolean;
+  maxLabel?: string;
+  maxValue?: bigint;
+  maxAccent?: string;
+  onMax?: () => void;
+}
+
+function Field({
+  label,
+  unit,
+  value,
+  onChange,
+  disabled,
+  maxLabel,
+  maxValue,
+  maxAccent,
+  onMax,
+}: FieldProps) {
+  const hasMax = onMax !== undefined;
+  const maxDisabled = disabled || !maxValue || maxValue === 0n;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
+        <span className="text-zinc-500">{label}</span>
+        {hasMax && (
+          <button
+            type="button"
+            disabled={maxDisabled}
+            onClick={onMax}
+            className={`rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wider transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 ${maxAccent ?? ''}`}
+          >
+            MAX
+          </button>
+        )}
+      </div>
+      <div
+        className={`flex items-center rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 transition focus-within:border-emerald-500 ${
+          disabled ? 'opacity-50' : ''
+        }`}
+      >
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="0.0"
+          inputMode="decimal"
+          disabled={disabled}
+          className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none"
+        />
+        <span className="ml-2 text-sm font-medium text-zinc-500">{unit}</span>
+      </div>
+      {hasMax && (
+        <div className="mt-1 text-[11px] text-zinc-500">
+          {maxLabel}:{' '}
+          {maxValue === undefined
+            ? '—'
+            : `${formatOPN(maxValue)} ${unit}`}
+        </div>
+      )}
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { MainNav, useHashRoute } from '../components/MainNav';
 import { DashboardView } from '../components/DashboardView';
 import { ActionsView } from '../components/ActionsView';
 import { LiquidatePanel } from '../components/LiquidatePanel';
+import { HistoryView } from '../components/HistoryView';
 
 export default function Home() {
   const { view, action, setRoute } = useHashRoute();
@@ -45,6 +46,7 @@ export default function Home() {
           />
         )}
         {view === 'liquidate' && <LiquidatePanel />}
+        {view === 'history' && <HistoryView />}
       </ConnectGate>
     </main>
   );

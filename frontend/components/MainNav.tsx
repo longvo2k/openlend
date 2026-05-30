@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 export type ActionKind = 'supply' | 'withdraw' | 'borrow' | 'repay';
-export type View = 'dashboard' | 'actions' | 'liquidate';
+export type View = 'dashboard' | 'actions' | 'liquidate' | 'history';
 
 interface NavLink {
   view: View;
@@ -16,6 +16,7 @@ const LINKS: NavLink[] = [
   { view: 'dashboard', label: 'Dashboard', accent: 'bg-zinc-200 text-black' },
   { view: 'actions', label: 'Actions', accent: 'bg-emerald-500 text-black' },
   { view: 'liquidate', label: 'Liquidate', accent: 'bg-red-500 text-black' },
+  { view: 'history', label: 'History', accent: 'bg-zinc-400 text-black' },
 ];
 
 interface Props {
@@ -62,6 +63,7 @@ function viewFromHash(hash: string): View {
   const h = hash.replace('#', '');
   if (h === 'dashboard') return 'dashboard';
   if (h === 'liquidate') return 'liquidate';
+  if (h === 'history') return 'history';
   if (h === 'actions' || h === 'supply' || h === 'withdraw' || h === 'borrow' || h === 'repay') {
     return 'actions';
   }

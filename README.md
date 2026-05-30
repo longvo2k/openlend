@@ -48,6 +48,19 @@ npm run deploy:testnet
 
 This writes the deployed address to `deployments/iopnTestnet.json`.
 
+## Verify on the explorer
+
+The IOPN testnet explorer (`testnet.iopn.tech`) speaks the standard
+Etherscan-compatible `/api` endpoint. After deploy:
+
+```bash
+npx hardhat verify --network iopnTestnet <CONTRACT_ADDRESS>
+```
+
+No API key is required. On success the explorer's contract page exposes a
+**Code** tab with the verified source. Example (already verified):
+[testnet.iopn.tech/address/0xdb721210c52d64329468975e9e46D39233d36a5d#code](https://testnet.iopn.tech/address/0xdb721210c52d64329468975e9e46D39233d36a5d#code).
+
 ## Interact
 
 All amounts are in OPN (decimal strings, e.g. `1.5`).
@@ -84,13 +97,28 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Connect a wallet (MetaMask, RainbowKit-supported)
+Open http://localhost:3000. Connect a wallet (MetaMask, OKX, RainbowKit-supported)
 and either approve the IOPN Testnet network prompt or switch manually.
 The dApp reads pool/account state directly from the deployed contract via
 `deployments/iopnTestnet.json`.
 
 Stack: Next.js 14 + wagmi v2 + RainbowKit + Tailwind. See
 [frontend spec](docs/superpowers/specs/2026-05-29-openlend-frontend-design.md).
+
+### Deploying the frontend to Vercel
+
+1. Import the GitHub repo at https://vercel.com/new.
+2. Set **Root Directory** to `frontend`.
+3. Set environment variables under **Settings → Environment Variables**:
+   - `NEXT_PUBLIC_LENDING_POOL_ADDRESS_TESTNET` — the deployed
+     `LendingPool` address (from `deployments/iopnTestnet.json` after
+     `npm run deploy:testnet`).
+   - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — *recommended*. Create a free
+     project at https://cloud.walletconnect.com/ and paste the
+     32-character ID. Without this the dApp still works (MetaMask /
+     OKX / injected wallets all connect), but the browser console will
+     show noisy `403`/`400` errors from WalletConnect's config endpoint.
+4. Click **Deploy**.
 
 ## Parameters
 

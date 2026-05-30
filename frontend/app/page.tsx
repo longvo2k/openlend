@@ -1,52 +1,90 @@
 'use client';
 
-import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ConnectGate } from '../components/ConnectGate';
-import { SectionNav, useHashRoute } from '../components/MainNav';
-import { LendView } from '../components/LendView';
-import { SwapView } from '../components/SwapView';
+import { Sidebar } from '../components/Sidebar';
+import { useHashRoute, sectionOf } from '../lib/route';
+
+import { DashboardView } from '../components/DashboardView';
+import { ActionPanel } from '../components/ActionPanel';
+import { LiquidatePanel } from '../components/LiquidatePanel';
+import { HistoryView } from '../components/HistoryView';
+
+import { SwapPoolStats } from '../components/swap/SwapPoolStats';
+import { SwapPanel } from '../components/swap/SwapPanel';
+import { LiquidityPanel } from '../components/swap/LiquidityPanel';
+import { FaucetPanel } from '../components/swap/FaucetPanel';
 
 export default function Home() {
-  const { section, lendView, swapView, action, setSection, setLendView, setSwapView } =
-    useHashRoute();
+  const { route, setRoute } = useHashRoute();
 
   return (
-    <main className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <Image
-            src="/logo.png"
-            alt="OpenLend"
-            width={400}
-            height={120}
-            priority
-            className="h-8 sm:h-10 w-auto"
-          />
-        </div>
-        <div className="self-start sm:self-auto">
+    <div className="flex min-h-screen">
+      <Sidebar route={route} onChange={setRoute} />
+
+      <main className="flex-1 min-w-0">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 backdrop-blur sm:px-6">
+          {/* Spacer for the mobile hamburger that floats top-left */}
+          <div className="w-9 md:hidden" aria-hidden />
+          <div className="text-sm text-zinc-400 truncate">
+            {labelFor(route)}
+          </div>
           <ConnectButton />
-        </div>
-      </header>
+        </header>
 
-      <ConnectGate>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionNav active={section} onChange={setSection} />
-          <span className="hidden text-xs text-zinc-500 sm:inline">
-            DeFi suite on IOPN testnet
-          </span>
+        <div className="px-4 py-5 sm:px-6 sm:py-6 max-w-4xl">
+          <ConnectGate>{renderRoute(route)}</ConnectGate>
         </div>
-
-        {section === 'lend' && (
-          <LendView
-            view={lendView}
-            action={action}
-            onViewChange={setLendView}
-            onActionChange={(k) => setLendView('actions', k)}
-          />
-        )}
-        {section === 'swap' && <SwapView view={swapView} onChange={setSwapView} />}
-      </ConnectGate>
-    </main>
+      </main>
+    </div>
   );
+}
+
+function renderRoute(route: ReturnType<typeof useHashRoute>['route']) {
+  switch (route) {
+    case 'lend:dashboard':
+      return <DashboardView />;
+    case 'lend:supply':
+      return <SinglePanel><ActionPanel kind="supply" /></SinglePanel>;
+    case 'lend:withdraw':
+      return <SinglePanel><ActionPanel kind="withdraw" /></SinglePanel>;
+    case 'lend:borrow':
+      return <SinglePanel><ActionPanel kind="borrow" /></SinglePanel>;
+    case 'lend:repay':
+      return <SinglePanel><ActionPanel kind="repay" /></SinglePanel>;
+    case 'lend:liquidate':
+      return <LiquidatePanel />;
+    case 'lend:history':
+      return <HistoryView />;
+    case 'swap:swap':
+      return (
+        <div className="space-y-4 sm:space-y-6">
+          <SwapPoolStats />
+          <SinglePanel><SwapPanel /></SinglePanel>
+        </div>
+      );
+    case 'swap:liquidity':
+      return (
+        <div className="space-y-4 sm:space-y-6">
+          <SwapPoolStats />
+          <SinglePanel><LiquidityPanel /></SinglePanel>
+        </div>
+      );
+    case 'swap:faucet':
+      return (
+        <div className="space-y-4 sm:space-y-6">
+          <SinglePanel><FaucetPanel /></SinglePanel>
+        </div>
+      );
+  }
+}
+
+function SinglePanel({ children }: { children: React.ReactNode }) {
+  return <div className="max-w-lg">{children}</div>;
+}
+
+function labelFor(route: ReturnType<typeof useHashRoute>['route']): string {
+  const section = sectionOf(route) === 'lend' ? 'OpenLend' : 'OpenSwap';
+  const page = route.split(':')[1].replace(/^./, (c) => c.toUpperCase());
+  return `${section} · ${page}`;
 }

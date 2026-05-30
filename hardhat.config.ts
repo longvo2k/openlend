@@ -26,6 +26,26 @@ const config: HardhatUserConfig = {
       gasPrice: 7_000_000_000,
     },
   },
+  // Etherscan-compatible source verification on the IOPN testnet explorer.
+  // No API key required (the explorer accepts any non-empty string).
+  etherscan: {
+    apiKey: {
+      iopnTestnet: process.env.IOPN_EXPLORER_API_KEY ?? "no-key-needed",
+    },
+    customChains: [
+      {
+        network: "iopnTestnet",
+        chainId: 984,
+        urls: {
+          apiURL: "https://testnet.iopn.tech/api",
+          browserURL: "https://testnet.iopn.tech",
+        },
+      },
+    ],
+  },
+  sourcify: {
+    enabled: false,
+  },
 };
 
 export default config;

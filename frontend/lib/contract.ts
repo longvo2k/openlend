@@ -13,44 +13,34 @@ export const SUPPORTED_CHAIN_IDS = [984, 31337] as const;
 export type SupportedChainId = (typeof SUPPORTED_CHAIN_IDS)[number];
 
 /**
- * Per-chain address loaders. All three contracts come from a single
- * `deployments/<network>.json` written by `scripts/deploy.ts`. For the
- * frontend they are exposed as env vars (per chain) via `.env.local`.
- * Each loader returns `null` when its var is missing so the UI can
- * surface a "no deployment found" hint instead of crashing.
+ * Per-chain address loaders.
+ *
+ * IMPORTANT: Each `process.env.NEXT_PUBLIC_X` access below MUST be a static
+ * member-expression literal. Next.js only inlines static references at
+ * build/dev time — `process.env[varName]` with a variable returns
+ * `undefined` in the browser bundle. Do not refactor these into a helper
+ * that takes the key as a string parameter.
  */
 
-function fromEnv(chainId: number, testnetKey: string, localKey: string): Hex | null {
-  const raw =
-    chainId === 984
-      ? process.env[testnetKey]
-      : chainId === 31337
-      ? process.env[localKey]
-      : undefined;
+function check(raw: string | undefined): Hex | null {
   if (raw && ADDRESS_RE.test(raw)) return raw as Hex;
   return null;
 }
 
 export function getLendingPoolAddress(chainId: number): Hex | null {
-  return fromEnv(
-    chainId,
-    'NEXT_PUBLIC_LENDING_POOL_ADDRESS_TESTNET',
-    'NEXT_PUBLIC_LENDING_POOL_ADDRESS_LOCAL',
-  );
+  if (chainId === 984) return check(process.env.NEXT_PUBLIC_LENDING_POOL_ADDRESS_TESTNET);
+  if (chainId === 31337) return check(process.env.NEXT_PUBLIC_LENDING_POOL_ADDRESS_LOCAL);
+  return null;
 }
 
 export function getPairAddress(chainId: number): Hex | null {
-  return fromEnv(
-    chainId,
-    'NEXT_PUBLIC_OPENSWAP_PAIR_TESTNET',
-    'NEXT_PUBLIC_OPENSWAP_PAIR_LOCAL',
-  );
+  if (chainId === 984) return check(process.env.NEXT_PUBLIC_OPENSWAP_PAIR_TESTNET);
+  if (chainId === 31337) return check(process.env.NEXT_PUBLIC_OPENSWAP_PAIR_LOCAL);
+  return null;
 }
 
 export function getMockUSDCAddress(chainId: number): Hex | null {
-  return fromEnv(
-    chainId,
-    'NEXT_PUBLIC_MOCK_USDC_TESTNET',
-    'NEXT_PUBLIC_MOCK_USDC_LOCAL',
-  );
+  if (chainId === 984) return check(process.env.NEXT_PUBLIC_MOCK_USDC_TESTNET);
+  if (chainId === 31337) return check(process.env.NEXT_PUBLIC_MOCK_USDC_LOCAL);
+  return null;
 }

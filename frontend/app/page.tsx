@@ -3,14 +3,13 @@
 import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ConnectGate } from '../components/ConnectGate';
-import { MainNav, useHashRoute } from '../components/MainNav';
-import { DashboardView } from '../components/DashboardView';
-import { ActionsView } from '../components/ActionsView';
-import { LiquidatePanel } from '../components/LiquidatePanel';
-import { HistoryView } from '../components/HistoryView';
+import { SectionNav, useHashRoute } from '../components/MainNav';
+import { LendView } from '../components/LendView';
+import { SwapView } from '../components/SwapView';
 
 export default function Home() {
-  const { view, action, setRoute } = useHashRoute();
+  const { section, lendView, swapView, action, setSection, setLendView, setSwapView } =
+    useHashRoute();
 
   return (
     <main className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -32,21 +31,21 @@ export default function Home() {
 
       <ConnectGate>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <MainNav active={view} onChange={(v) => setRoute(v)} />
+          <SectionNav active={section} onChange={setSection} />
           <span className="hidden text-xs text-zinc-500 sm:inline">
-            Single-asset borrow/lend on IOPN testnet
+            DeFi suite on IOPN testnet
           </span>
         </div>
 
-        {view === 'dashboard' && <DashboardView />}
-        {view === 'actions' && (
-          <ActionsView
+        {section === 'lend' && (
+          <LendView
+            view={lendView}
             action={action}
-            onChange={(k) => setRoute('actions', k)}
+            onViewChange={setLendView}
+            onActionChange={(k) => setLendView('actions', k)}
           />
         )}
-        {view === 'liquidate' && <LiquidatePanel />}
-        {view === 'history' && <HistoryView />}
+        {section === 'swap' && <SwapView view={swapView} onChange={setSwapView} />}
       </ConnectGate>
     </main>
   );

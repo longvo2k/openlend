@@ -1,7 +1,7 @@
 {
-  "name": "openlend",
-  "version": "0.1.0",
-  "description": "Minimal single-asset borrow/lend pool on IOPN testnet",
+  "name": "iopn-builders",
+  "version": "0.2.0",
+  "description": "OpenLend (lending) + OpenSwap (AMM) on IOPN testnet",
   "private": true,
   "scripts": {
     "compile": "hardhat compile",
@@ -12,7 +12,12 @@
     "withdraw": "hardhat run scripts/withdraw.ts --network iopnTestnet",
     "borrow": "hardhat run scripts/borrow.ts --network iopnTestnet",
     "repay": "hardhat run scripts/repay.ts --network iopnTestnet",
-    "liquidate": "hardhat run scripts/liquidate.ts --network iopnTestnet"
+    "liquidate": "hardhat run scripts/liquidate.ts --network iopnTestnet",
+    "faucet": "hardhat run scripts/faucet.ts --network iopnTestnet",
+    "add-liquidity": "hardhat run scripts/add-liquidity.ts --network iopnTestnet",
+    "remove-liquidity": "hardhat run scripts/remove-liquidity.ts --network iopnTestnet",
+    "swap-opn-for-musdc": "hardhat run scripts/swap-opn-for-musdc.ts --network iopnTestnet",
+    "swap-musdc-for-opn": "hardhat run scripts/swap-musdc-for-opn.ts --network iopnTestnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^7.0.0",

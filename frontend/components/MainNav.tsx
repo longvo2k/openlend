@@ -2,36 +2,94 @@
 
 import { useEffect, useState } from 'react';
 
+export type Section = 'lend' | 'swap';
+export type LendView = 'dashboard' | 'actions' | 'liquidate' | 'history';
+export type SwapView = 'swap' | 'liquidity' | 'faucet';
 export type ActionKind = 'supply' | 'withdraw' | 'borrow' | 'repay';
-export type View = 'dashboard' | 'actions' | 'liquidate' | 'history';
 
-interface NavLink {
-  view: View;
+interface SectionLink {
+  section: Section;
   label: string;
-  // Active accent classes for the pill background.
   accent: string;
 }
 
-const LINKS: NavLink[] = [
+const SECTIONS: SectionLink[] = [
+  { section: 'lend', label: 'Lend', accent: 'bg-emerald-500 text-black' },
+  { section: 'swap', label: 'Swap', accent: 'bg-sky-500 text-black' },
+];
+
+interface LendLink {
+  view: LendView;
+  label: string;
+  accent: string;
+}
+
+const LEND_VIEWS: LendLink[] = [
   { view: 'dashboard', label: 'Dashboard', accent: 'bg-zinc-200 text-black' },
   { view: 'actions', label: 'Actions', accent: 'bg-emerald-500 text-black' },
   { view: 'liquidate', label: 'Liquidate', accent: 'bg-red-500 text-black' },
   { view: 'history', label: 'History', accent: 'bg-zinc-400 text-black' },
 ];
 
-interface Props {
-  active: View;
-  onChange: (v: View) => void;
+interface SwapLink {
+  view: SwapView;
+  label: string;
+  accent: string;
 }
 
-export function MainNav({ active, onChange }: Props) {
+const SWAP_VIEWS: SwapLink[] = [
+  { view: 'swap', label: 'Swap', accent: 'bg-emerald-500 text-black' },
+  { view: 'liquidity', label: 'Liquidity', accent: 'bg-violet-500 text-black' },
+  { view: 'faucet', label: 'Faucet', accent: 'bg-amber-500 text-black' },
+];
+
+interface SectionNavProps {
+  active: Section;
+  onChange: (s: Section) => void;
+}
+
+export function SectionNav({ active, onChange }: SectionNavProps) {
   return (
     <nav
       className="inline-flex flex-wrap gap-1 rounded-xl border border-zinc-800 bg-zinc-900 p-1"
       role="tablist"
-      aria-label="Main navigation"
+      aria-label="Protocol"
     >
-      {LINKS.map((l) => {
+      {SECTIONS.map((s) => {
+        const isActive = s.section === active;
+        return (
+          <button
+            key={s.section}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(s.section)}
+            className={
+              'rounded-lg px-4 py-1.5 text-sm font-semibold transition sm:px-5 ' +
+              (isActive ? s.accent : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200')
+            }
+          >
+            {s.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+interface LendSubNavProps {
+  active: LendView;
+  onChange: (v: LendView) => void;
+}
+
+export function LendSubNav({ active, onChange }: LendSubNavProps) {
+  return (
+    <nav
+      className="inline-flex flex-wrap gap-1 rounded-lg border border-zinc-800 bg-zinc-900 p-1"
+      role="tablist"
+      aria-label="Lend section"
+    >
+      {LEND_VIEWS.map((l) => {
         const isActive = l.view === active;
         return (
           <button
@@ -41,10 +99,8 @@ export function MainNav({ active, onChange }: Props) {
             aria-selected={isActive}
             onClick={() => onChange(l.view)}
             className={
-              'rounded-lg px-3 py-1.5 text-sm font-medium transition sm:px-4 ' +
-              (isActive
-                ? l.accent
-                : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200')
+              'rounded-md px-3 py-1 text-sm font-medium transition ' +
+              (isActive ? l.accent : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200')
             }
           >
             {l.label}
@@ -55,59 +111,113 @@ export function MainNav({ active, onChange }: Props) {
   );
 }
 
+interface SwapSubNavProps {
+  active: SwapView;
+  onChange: (v: SwapView) => void;
+}
+
+export function SwapSubNav({ active, onChange }: SwapSubNavProps) {
+  return (
+    <nav
+      className="inline-flex flex-wrap gap-1 rounded-lg border border-zinc-800 bg-zinc-900 p-1"
+      role="tablist"
+      aria-label="Swap section"
+    >
+      {SWAP_VIEWS.map((l) => {
+        const isActive = l.view === active;
+        return (
+          <button
+            key={l.view}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(l.view)}
+            className={
+              'rounded-md px-3 py-1 text-sm font-medium transition ' +
+              (isActive ? l.accent : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200')
+            }
+          >
+            {l.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+/* ----------------------------- Hash routing ----------------------------- */
+
 /**
- * Compute the active main view from a URL hash. Sub-action hashes
- * (#supply / #withdraw / #borrow / #repay) all map to the Actions view.
+ * Flat hash format. The section is derived from the page hash so direct
+ * links keep working:
+ *
+ *   #dashboard / #liquidate / #history → Lend section
+ *   #supply / #withdraw / #borrow / #repay → Lend > Actions
+ *   #swap / #liquidity / #faucet → Swap section
  */
-function viewFromHash(hash: string): View {
+interface Route {
+  section: Section;
+  lendView: LendView;
+  swapView: SwapView;
+  action: ActionKind;
+}
+
+function routeFromHash(hash: string): Route {
   const h = hash.replace('#', '');
-  if (h === 'dashboard') return 'dashboard';
-  if (h === 'liquidate') return 'liquidate';
-  if (h === 'history') return 'history';
-  if (h === 'actions' || h === 'supply' || h === 'withdraw' || h === 'borrow' || h === 'repay') {
-    return 'actions';
+  if (h === 'swap' || h === 'liquidity' || h === 'faucet') {
+    return { section: 'swap', lendView: 'dashboard', swapView: h, action: 'supply' };
   }
-  return 'dashboard';
+  if (h === 'supply' || h === 'withdraw' || h === 'borrow' || h === 'repay') {
+    return { section: 'lend', lendView: 'actions', swapView: 'swap', action: h };
+  }
+  if (h === 'liquidate') {
+    return { section: 'lend', lendView: 'liquidate', swapView: 'swap', action: 'supply' };
+  }
+  if (h === 'history') {
+    return { section: 'lend', lendView: 'history', swapView: 'swap', action: 'supply' };
+  }
+  if (h === 'actions') {
+    return { section: 'lend', lendView: 'actions', swapView: 'swap', action: 'supply' };
+  }
+  return { section: 'lend', lendView: 'dashboard', swapView: 'swap', action: 'supply' };
 }
 
-function actionFromHash(hash: string): ActionKind {
-  const h = hash.replace('#', '');
-  if (h === 'withdraw' || h === 'borrow' || h === 'repay') return h;
-  return 'supply';
-}
-
-/**
- * Read the URL hash and return `{ view, action }`. SSR-safe (defaults
- * to dashboard/supply when window is unavailable).
- */
 export function useHashRoute() {
-  const [view, setView] = useState<View>('dashboard');
-  const [action, setAction] = useState<ActionKind>('supply');
+  const [route, setRoute] = useState<Route>({
+    section: 'lend',
+    lendView: 'dashboard',
+    swapView: 'swap',
+    action: 'supply',
+  });
 
   useEffect(() => {
-    const sync = () => {
-      const h = window.location.hash;
-      setView(viewFromHash(h));
-      setAction(actionFromHash(h));
-    };
+    const sync = () => setRoute(routeFromHash(window.location.hash));
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
   }, []);
 
-  const setRoute = (v: View, a?: ActionKind) => {
-    setView(v);
-    if (typeof window === 'undefined') return;
-    let target: string;
-    if (v === 'actions') {
-      const k = a ?? action;
-      target = `#${k}`;
-      setAction(k);
-    } else {
-      target = `#${v}`;
+  function write(target: string) {
+    setRoute(routeFromHash(`#${target}`));
+    if (typeof window !== 'undefined') {
+      history.replaceState(null, '', `#${target}`);
     }
-    history.replaceState(null, '', target);
-  };
+  }
 
-  return { view, action, setRoute };
+  return {
+    ...route,
+    /** Switch top-level section, falling back to its default sub-view. */
+    setSection(s: Section) {
+      write(s === 'lend' ? 'dashboard' : 'swap');
+    },
+    /** Switch Lend sub-view. For `actions`, also pass the desired action. */
+    setLendView(v: LendView, a?: ActionKind) {
+      if (v === 'actions') write(a ?? route.action);
+      else write(v);
+    },
+    /** Switch Swap sub-view. */
+    setSwapView(v: SwapView) {
+      write(v);
+    },
+  };
 }

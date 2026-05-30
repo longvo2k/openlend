@@ -59,11 +59,11 @@ export function AccountStats() {
   const short = user ? `${user.slice(0, 6)}…${user.slice(-4)}` : '';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-500/60 via-transparent to-transparent" />
 
       <header className="flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
           <svg
             width="18"
             height="18"
@@ -80,10 +80,10 @@ export function AccountStats() {
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Your account</h2>
             {short && (
-              <code className="rounded bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
+              <code className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] sm:text-xs text-zinc-400">
                 {short}
               </code>
             )}
@@ -97,14 +97,14 @@ export function AccountStats() {
         <div className="text-xs uppercase tracking-wide text-zinc-500">
           Wallet balance
         </div>
-        <div className="mt-1 text-3xl font-semibold tabular-nums">
+        <div className="mt-1 text-2xl sm:text-3xl font-semibold tabular-nums">
           {formatOPN(bal?.value)}
-          <span className="ml-1 text-base font-medium text-zinc-500">OPN</span>
+          <span className="ml-1 text-sm sm:text-base font-medium text-zinc-500">OPN</span>
         </div>
       </div>
 
       {/* Position breakdown */}
-      <dl className="mt-6 grid grid-cols-3 gap-4 border-t border-zinc-800 pt-5">
+      <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-zinc-800 pt-5 sm:grid-cols-3">
         <SmallStat
           label="Supply shares"
           value={isLoading ? '…' : formatOPN(shares)}

@@ -266,14 +266,14 @@ export function ActionPanel({ kind }: Props) {
   const busy = phase === 'signing' || phase === 'pending';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accent.bar} via-transparent to-transparent`}
       />
 
       <header className="flex items-start gap-3 mb-1">
         <div
-          className={`flex h-9 w-9 items-center justify-center rounded-lg ${accent.iconBg} ${accent.text} text-lg font-bold`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accent.iconBg} ${accent.text} text-lg font-bold`}
         >
           {meta.icon}
         </div>
@@ -372,7 +372,7 @@ function Field({
   const maxDisabled = disabled || !maxValue || maxValue === 0n;
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-wide">
         <span className="text-zinc-500">{label}</span>
         {hasMax && (
           <button

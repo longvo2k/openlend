@@ -48,7 +48,7 @@ export function PoolStats() {
     <Card>
       <Header rateBps={rateBps} />
 
-      <dl className="mt-6 grid grid-cols-3 gap-4">
+      <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <BigStat label="Total supplied" value={supplied} loading={isLoading} />
         <BigStat label="Total borrowed" value={borrowed} loading={isLoading} />
         <BigStat label="Available" value={available} loading={isLoading} />
@@ -72,7 +72,7 @@ export function PoolStats() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-emerald-500/60 via-transparent to-transparent" />
       {children}
     </section>

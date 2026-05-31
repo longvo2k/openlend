@@ -2,17 +2,13 @@
 
 What we're building next.
 
-## Next · Q3 2026
+## Next · Q4 2026
 
-Making the Strategy section feel like a real product:
+- **Price oracle** integration (Pyth if available on IOPN testnet, otherwise a clearly labelled timelocked admin-price fallback). Unlocks cross-asset HF math, which gates multi-asset lending.
+- **Permit2** for one-tx mUSDC flows on Swap, Add Liquidity, and the Leveraged LP composer. Blocked today: Permit2 is not deployed at its canonical address on IOPN testnet, and MockUSDC is a plain ERC20 with no `permit()`. Lands once one of those gaps closes.
+- **Leverage-long looper** on OPN once a yield-bearing collateral or multi-asset lending makes the deposit-borrow loop economically meaningful. On single-asset lending the loop only amplifies gross exposure at a 5 percent APR cost with no offsetting yield.
 
-- **Close & rebalance Leveraged LP** in one click
-- **Leverage-long looper** on OPN, up to 3x with a visual slider
-- **Permit2** to kill the double-popup on Swap and Add Liquidity
-- **Price oracle** integration (Pyth if available on IOPN testnet, otherwise a clearly labelled timelocked admin-price fallback)
-- **Position dashboard** with live Health Factor and a close shortcut
-
-*Solo and part-time, so oracle-dependent items ship behind the admin-price fallback if Pyth is not live by Q3.*
+*Solo and part-time, so oracle-dependent items ship behind the admin-price fallback if Pyth is not live by Q4.*
 
 ## Later · 2027 and beyond
 

@@ -11,7 +11,7 @@ import {
   useReadContracts,
   useWriteContract,
 } from 'wagmi';
-import { Droplets } from 'lucide-react';
+import { ExternalLink, Plus } from 'lucide-react';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -27,12 +27,16 @@ import {
   parseMUSDC,
   parseOPN,
 } from '../../lib/format';
-import { TokenInput } from '../ui/TokenInput';
 
 type Mode = 'add' | 'remove';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';
 
 const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+
+function usdOfOPN(amountOPN: bigint, reserveOPN: bigint, reserveMUSDC: bigint): bigint {
+  if (reserveOPN === 0n) return 0n;
+  return (amountOPN * reserveMUSDC) / reserveOPN;
+}
 
 export function LiquidityPanel() {
   const chainId = useChainId();
@@ -47,7 +51,7 @@ export function LiquidityPanel() {
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const { writeContractAsync } = useWriteContract();
 
-  // Reads needed for both modes.
+  /* ----- Shared reads ----- */
   const { data: reservesData } = useReadContracts({
     contracts: pair
       ? [
@@ -62,7 +66,7 @@ export function LiquidityPanel() {
   const reserveOPN = reserves?.[0];
   const reserveMUSDC = reserves?.[1];
 
-  // ----- Add mode state -----
+  /* ----- Add mode state ----- */
   const [opnAmount, setOpnAmount] = useState('');
   const [musdcAmount, setMusdcAmount] = useState('');
   const [lastEdited, setLastEdited] = useState<'opn' | 'musdc'>('opn');
@@ -87,34 +91,24 @@ export function LiquidityPanel() {
   });
   const allowance = (allowanceRaw as bigint | undefined) ?? 0n;
 
-  // Auto-pair: when the pool has reserves, fill the other side to match the ratio.
+  // Auto-pair: when the pool has reserves, sync the other side to match the ratio.
   useEffect(() => {
     if (mode !== 'add') return;
     if (!reserveOPN || !reserveMUSDC || reserveOPN === 0n || reserveMUSDC === 0n) return;
     if (lastEdited === 'opn') {
-      if (opnAmount === '') {
-        setMusdcAmount('');
-        return;
-      }
+      if (opnAmount === '') { setMusdcAmount(''); return; }
       try {
         const opn = parseOPN(opnAmount);
         const musdc = (opn * reserveMUSDC) / reserveOPN;
         setMusdcAmount(formatMUSDC(musdc, 6));
-      } catch {
-        /* invalid input */
-      }
+      } catch { /* invalid input */ }
     } else {
-      if (musdcAmount === '') {
-        setOpnAmount('');
-        return;
-      }
+      if (musdcAmount === '') { setOpnAmount(''); return; }
       try {
         const musdc = parseMUSDC(musdcAmount);
         const opn = (musdc * reserveOPN) / reserveMUSDC;
         setOpnAmount(formatOPN(opn, 18));
-      } catch {
-        /* invalid input */
-      }
+      } catch { /* invalid input */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opnAmount, musdcAmount, lastEdited, reserveOPN, reserveMUSDC, mode]);
@@ -138,7 +132,7 @@ export function LiquidityPanel() {
   });
   const quotedLP = (quoteAddRaw as readonly [bigint, bigint, bigint] | undefined)?.[0];
 
-  // ----- Remove mode state -----
+  /* ----- Remove mode state ----- */
   const [lpText, setLpText] = useState('');
   const { data: userLP } = useReadContract({
     address: pair ?? undefined,
@@ -152,43 +146,50 @@ export function LiquidityPanel() {
   }, [lpText]);
 
   const removePreview = useMemo(() => {
-    if (!parsedLP || !totalSupply || totalSupply === 0n || !reserveOPN || !reserveMUSDC) {
-      return null;
-    }
+    if (!parsedLP || !totalSupply || totalSupply === 0n || !reserveOPN || !reserveMUSDC) return null;
     return {
       opnOut: (parsedLP * reserveOPN) / totalSupply,
       mUSDCOut: (parsedLP * reserveMUSDC) / totalSupply,
     };
   }, [parsedLP, totalSupply, reserveOPN, reserveMUSDC]);
 
-  // ----- MAX helpers -----
+  /* ----- MAX helpers ----- */
   const opnMax: bigint | undefined = balOPN
-    ? balOPN.value - GAS_RESERVE_WEI > 0n
-      ? balOPN.value - GAS_RESERVE_WEI
-      : 0n
+    ? balOPN.value - GAS_RESERVE_WEI > 0n ? balOPN.value - GAS_RESERVE_WEI : 0n
     : undefined;
-  const opnMaxFormatted = opnMax === undefined ? '—' : `${formatOPN(opnMax)} OPN`;
+  const musdcMax = balMUSDC as bigint | undefined;
+  const lpMax = userLP as bigint | undefined;
+
+  const opnBalFmt = balOPN === undefined ? '—' : `${formatOPN(balOPN.value)} OPN`;
+  const musdcBalFmt = musdcMax === undefined ? '—' : `${formatMUSDC(musdcMax)} mUSDC`;
+  const lpBalFmt = lpMax === undefined ? '—' : `${formatLP(lpMax)} LP`;
+
   const onMaxOPN = () => {
     if (!opnMax) return;
     setLastEdited('opn');
     setOpnAmount(formatOPN(opnMax, 18));
   };
-
-  const musdcMax = balMUSDC as bigint | undefined;
-  const musdcMaxFormatted = musdcMax === undefined ? '—' : `${formatMUSDC(musdcMax)} mUSDC`;
   const onMaxMUSDC = () => {
     if (!musdcMax) return;
     setLastEdited('musdc');
     setMusdcAmount(formatMUSDC(musdcMax, 6));
   };
-
-  const lpMaxFormatted = userLP === undefined ? '—' : `${formatLP(userLP as bigint)} LP`;
   const onMaxLP = () => {
-    if (!userLP) return;
-    setLpText(formatLP(userLP as bigint, 18));
+    if (!lpMax) return;
+    setLpText(formatLP(lpMax, 18));
   };
 
-  // ----- Submit -----
+  /* USD value helpers (mUSDC anchors $1) */
+  const opnUSD = useMemo<bigint>(() => {
+    if (!parsedOPN || parsedOPN <= 0n || !reserveOPN || !reserveMUSDC) return 0n;
+    return usdOfOPN(parsedOPN, reserveOPN, reserveMUSDC);
+  }, [parsedOPN, reserveOPN, reserveMUSDC]);
+  const musdcUSD = parsedMUSDC ?? 0n;
+  const removeOPNUSD = useMemo<bigint>(() => {
+    if (!removePreview || !reserveOPN || !reserveMUSDC) return 0n;
+    return usdOfOPN(removePreview.opnOut, reserveOPN, reserveMUSDC);
+  }, [removePreview, reserveOPN, reserveMUSDC]);
+
   const reset = () => {
     setOpnAmount('');
     setMusdcAmount('');
@@ -198,25 +199,23 @@ export function LiquidityPanel() {
     setTxHash(undefined);
   };
 
-  const busy = phase !== 'idle' && phase !== 'success';
-
   const switchMode = (m: Mode) => {
     setMode(m);
     reset();
   };
 
+  const busy = phase !== 'idle' && phase !== 'success';
+  const needsApproval = mode === 'add' && parsedMUSDC !== null && allowance < parsedMUSDC;
+
   const onSubmit = async () => {
-    if (!pair || !publicClient) {
-      setError('No deployment for this network.');
-      return;
-    }
+    if (!pair || !publicClient) { setError('No deployment for this network.'); return; }
     setError(null);
     try {
       if (mode === 'add') {
         if (!parsedOPN || !parsedMUSDC || parsedOPN <= 0n || parsedMUSDC <= 0n) {
           throw new Error('Enter both amounts > 0');
         }
-        if (allowance < parsedMUSDC) {
+        if (needsApproval) {
           if (!mUSDC) throw new Error('mUSDC address not found');
           setPhase('approving');
           const h0 = await writeContractAsync({
@@ -238,7 +237,6 @@ export function LiquidityPanel() {
         setTxHash(h);
         setPhase('pending');
         await publicClient.waitForTransactionReceipt({ hash: h });
-        setPhase('success');
       } else {
         if (!parsedLP || parsedLP <= 0n) throw new Error('Enter LP > 0');
         setPhase('signing');
@@ -251,8 +249,8 @@ export function LiquidityPanel() {
         setTxHash(h);
         setPhase('pending');
         await publicClient.waitForTransactionReceipt({ hash: h });
-        setPhase('success');
       }
+      setPhase('success');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg.includes('User rejected') ? 'Rejected in wallet.' : msg);
@@ -260,139 +258,264 @@ export function LiquidityPanel() {
     }
   };
 
-  const status =
-    error ? `Error: ${error}` :
-    phase === 'approving' ? 'Approve in wallet…' :
-    phase === 'signing' ? 'Confirm in wallet…' :
-    phase === 'pending' ? 'Pending…' :
-    phase === 'success' ? 'Confirmed ✓' :
-    '';
+  const ctaLabel = (() => {
+    if (busy) {
+      if (phase === 'approving') return 'Approving mUSDC…';
+      if (phase === 'signing') return 'Confirm in wallet…';
+      if (phase === 'pending') return mode === 'add' ? 'Adding liquidity…' : 'Removing liquidity…';
+    }
+    if (!user) return 'Connect wallet';
+    if (!pair) return 'No deployment';
+    if (mode === 'add') {
+      if (!parsedOPN || parsedOPN <= 0n || !parsedMUSDC || parsedMUSDC <= 0n) return 'Enter amounts';
+      if (opnMax !== undefined && parsedOPN > opnMax) return 'Insufficient OPN';
+      if (musdcMax !== undefined && parsedMUSDC > musdcMax) return 'Insufficient mUSDC';
+      if (needsApproval) return 'Approve mUSDC & Add';
+      return 'Add liquidity';
+    }
+    if (!parsedLP || parsedLP <= 0n) return 'Enter LP amount';
+    if (lpMax !== undefined && parsedLP > lpMax) return 'Insufficient LP';
+    return 'Remove liquidity';
+  })();
+
+  const ctaDisabled = (() => {
+    if (busy || !pair || !user) return true;
+    if (mode === 'add') {
+      if (!parsedOPN || parsedOPN <= 0n || !parsedMUSDC || parsedMUSDC <= 0n) return true;
+      if (opnMax !== undefined && parsedOPN > opnMax) return true;
+      if (musdcMax !== undefined && parsedMUSDC > musdcMax) return true;
+      return false;
+    }
+    if (!parsedLP || parsedLP <= 0n) return true;
+    if (lpMax !== undefined && parsedLP > lpMax) return true;
+    return false;
+  })();
+
   const explorer = txHash ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}` : null;
 
-  const ctaLabel =
-    mode === 'add'
-      ? (parsedMUSDC && allowance < parsedMUSDC ? 'Approve & Add Liquidity' : 'Add Liquidity')
-      : 'Remove Liquidity';
-
   return (
-    <section className="relative overflow-hidden rounded-xl bg-white p-6">
-
-      <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
-          <Droplets className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold">Liquidity</h3>
-          <p className="text-sm text-zinc-800">Provide both assets to earn 0.30% on every swap.</p>
+    <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
+      <header className="mb-3 flex items-center justify-between">
+        <h3 className="text-base font-semibold">Liquidity</h3>
+        {/* Add/Remove toggle */}
+        <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+          <button
+            type="button"
+            onClick={() => switchMode('add')}
+            className={
+              'rounded-md px-3 py-1 text-xs font-medium transition ' +
+              (mode === 'add' ? 'bg-black text-white' : 'text-zinc-600 hover:text-black')
+            }
+          >
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('remove')}
+            className={
+              'rounded-md px-3 py-1 text-xs font-medium transition ' +
+              (mode === 'remove' ? 'bg-black text-white' : 'text-zinc-600 hover:text-black')
+            }
+          >
+            Remove
+          </button>
         </div>
       </header>
 
-      <div className="mb-4 inline-flex rounded-lg border border-zinc-300 bg-white p-1">
-        <button
-          type="button"
-          onClick={() => switchMode('add')}
-          className={
-            'rounded-md px-3 py-1 text-sm font-medium transition ' +
-            (mode === 'add' ? 'bg-black text-white' : 'text-zinc-700 hover:bg-zinc-100')
-          }
-        >
-          Add
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode('remove')}
-          className={
-            'rounded-md px-3 py-1 text-sm font-medium transition ' +
-            (mode === 'remove' ? 'bg-black text-white' : 'text-zinc-700 hover:bg-zinc-100')
-          }
-        >
-          Remove
-        </button>
-      </div>
-
       {mode === 'add' && (
-        <div className="space-y-4">
-          <TokenInput
-            label="OPN amount"
-            value={opnAmount}
-            onChange={(s) => { setLastEdited('opn'); setOpnAmount(s); }}
-            unit="OPN"
-            disabled={busy}
-            maxValue={opnMax}
-            maxLabel="Wallet"
-            maxFormatted={opnMaxFormatted}
-            onMax={onMaxOPN}
-            accent="emerald"
-          />
-          <TokenInput
-            label="mUSDC amount"
-            value={musdcAmount}
-            onChange={(s) => { setLastEdited('musdc'); setMusdcAmount(s); }}
-            unit="mUSDC"
-            disabled={busy}
-            maxValue={musdcMax}
-            maxLabel="Wallet"
-            maxFormatted={musdcMaxFormatted}
-            onMax={onMaxMUSDC}
-            accent="emerald"
-          />
-          <div className="text-xs text-zinc-700">
-            You'll receive: <span className="text-zinc-900">{quotedLP === undefined ? '—' : `${formatLP(quotedLP)} LP`}</span>
+        <div className="space-y-2">
+          {/* OPN input */}
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div className="mb-1.5 text-xs font-medium text-zinc-500">OPN</div>
+            <div className="flex items-center gap-3">
+              <input
+                value={opnAmount}
+                onChange={(e) => { setLastEdited('opn'); setOpnAmount(e.target.value); }}
+                placeholder="0"
+                inputMode="decimal"
+                disabled={busy}
+                className="min-w-0 flex-1 bg-transparent text-2xl sm:text-3xl font-medium outline-none placeholder-zinc-300 disabled:opacity-50"
+              />
+              <TokenPill symbol="OPN" />
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
+              <span>${formatMUSDC(opnUSD)}</span>
+              <div className="flex items-center gap-2">
+                <span>Balance: {opnBalFmt}</span>
+                <button
+                  type="button"
+                  onClick={onMaxOPN}
+                  disabled={busy || !opnMax || opnMax === 0n}
+                  className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-black hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  MAX
+                </button>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={onSubmit}
-            disabled={busy || !pair || !parsedOPN || !parsedMUSDC}
-            className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
-          >
-            {busy ? 'Working…' : ctaLabel}
-          </button>
+
+          {/* + indicator */}
+          <div className="-my-1 flex justify-center">
+            <div className="z-10 rounded-xl border border-zinc-200 bg-white p-2 text-black shadow-sm">
+              <Plus className="h-4 w-4" aria-hidden />
+            </div>
+          </div>
+
+          {/* mUSDC input */}
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div className="mb-1.5 text-xs font-medium text-zinc-500">mUSDC</div>
+            <div className="flex items-center gap-3">
+              <input
+                value={musdcAmount}
+                onChange={(e) => { setLastEdited('musdc'); setMusdcAmount(e.target.value); }}
+                placeholder="0"
+                inputMode="decimal"
+                disabled={busy}
+                className="min-w-0 flex-1 bg-transparent text-2xl sm:text-3xl font-medium outline-none placeholder-zinc-300 disabled:opacity-50"
+              />
+              <TokenPill symbol="mUSDC" />
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
+              <span>${formatMUSDC(musdcUSD)}</span>
+              <div className="flex items-center gap-2">
+                <span>Balance: {musdcBalFmt}</span>
+                <button
+                  type="button"
+                  onClick={onMaxMUSDC}
+                  disabled={busy || !musdcMax || musdcMax === 0n}
+                  className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-black hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  MAX
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview line */}
+          <div className="mt-3 flex items-center justify-between px-1 text-xs text-zinc-600">
+            <span>You'll receive</span>
+            <span className="font-medium text-black">
+              {quotedLP === undefined ? '—' : `${formatLP(quotedLP)} LP`}
+            </span>
+          </div>
         </div>
       )}
 
       {mode === 'remove' && (
-        <div className="space-y-4">
-          <TokenInput
-            label="LP to burn"
-            value={lpText}
-            onChange={setLpText}
-            unit="LP"
-            disabled={busy}
-            maxValue={userLP as bigint | undefined}
-            maxLabel="Available"
-            maxFormatted={lpMaxFormatted}
-            onMax={onMaxLP}
-            accent="violet"
-          />
-          <div className="text-xs text-zinc-700">
-            You'll receive: <span className="text-zinc-900">
-              {removePreview
-                ? `≈ ${formatOPN(removePreview.opnOut)} OPN + ${formatMUSDC(removePreview.mUSDCOut)} mUSDC`
-                : '—'}
-            </span>
+        <div className="space-y-2">
+          {/* LP input */}
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <div className="mb-1.5 text-xs font-medium text-zinc-500">LP to burn</div>
+            <div className="flex items-center gap-3">
+              <input
+                value={lpText}
+                onChange={(e) => setLpText(e.target.value)}
+                placeholder="0"
+                inputMode="decimal"
+                disabled={busy}
+                className="min-w-0 flex-1 bg-transparent text-2xl sm:text-3xl font-medium outline-none placeholder-zinc-300 disabled:opacity-50"
+              />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-semibold text-black">
+                LP
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
+              <span>Available: {lpBalFmt}</span>
+              <button
+                type="button"
+                onClick={onMaxLP}
+                disabled={busy || !lpMax || lpMax === 0n}
+                className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-black hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                MAX
+              </button>
+            </div>
           </div>
-          <button
-            onClick={onSubmit}
-            disabled={busy || !pair || !parsedLP}
-            className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
-          >
-            {busy ? 'Working…' : ctaLabel}
-          </button>
+
+          {/* You'll receive */}
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 space-y-2">
+            <div className="text-xs font-medium text-zinc-500">You'll receive</div>
+            <div className="flex items-center justify-between">
+              <TokenPill symbol="OPN" />
+              <div className="text-right">
+                <div className="text-base font-medium tabular-nums">
+                  {removePreview ? formatOPN(removePreview.opnOut) : '—'}
+                </div>
+                <div className="text-[11px] text-zinc-500">${formatMUSDC(removeOPNUSD)}</div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <TokenPill symbol="mUSDC" />
+              <div className="text-right">
+                <div className="text-base font-medium tabular-nums">
+                  {removePreview ? formatMUSDC(removePreview.mUSDCOut) : '—'}
+                </div>
+                <div className="text-[11px] text-zinc-500">${removePreview ? formatMUSDC(removePreview.mUSDCOut) : '0.00'}</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {status && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-900">
-          <span>{status}</span>
+      <button
+        onClick={onSubmit}
+        disabled={ctaDisabled}
+        className={
+          'mt-4 w-full rounded-2xl py-3 text-sm font-semibold transition ' +
+          (ctaDisabled
+            ? 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
+            : 'bg-black text-white hover:bg-zinc-800')
+        }
+      >
+        {ctaLabel}
+      </button>
+
+      {(error || phase === 'success' || (busy && txHash) || (phase !== 'idle' && txHash)) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          {error && <span className="text-red-600">Error: {error}</span>}
+          {phase === 'success' && (
+            <span className="text-emerald-600">
+              {mode === 'add' ? 'Liquidity added.' : 'Liquidity removed.'}
+            </span>
+          )}
           {explorer && (
-            <a className="text-emerald-700 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
-              view tx ↗
+            <a
+              href={explorer}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-zinc-700 underline hover:text-black"
+            >
+              view tx <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           )}
           {phase === 'success' && (
-            <button className="text-zinc-700 underline" onClick={reset}>reset</button>
+            <button
+              type="button"
+              onClick={reset}
+              className="text-zinc-500 underline hover:text-black"
+            >
+              reset
+            </button>
           )}
         </div>
       )}
     </section>
+  );
+}
+
+function TokenPill({ symbol }: { symbol: 'OPN' | 'mUSDC' }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-black">
+      <span
+        aria-hidden
+        className={
+          'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ' +
+          (symbol === 'OPN' ? 'bg-black' : 'bg-emerald-600')
+        }
+      >
+        {symbol === 'OPN' ? 'O' : '$'}
+      </span>
+      {symbol}
+    </span>
   );
 }

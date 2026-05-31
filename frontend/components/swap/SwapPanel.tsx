@@ -10,7 +10,7 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowDown, ChevronDown, ChevronUp, ExternalLink, Settings } from 'lucide-react';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -25,13 +25,20 @@ import {
   parseMUSDC,
   parseOPN,
 } from '../../lib/format';
-import { TokenInput } from '../ui/TokenInput';
-import { SlippageSelector } from '../ui/SlippageSelector';
 
 type Direction = 'opn-to-musdc' | 'musdc-to-opn';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';
 
 const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+const SLIPPAGE_PRESETS_BPS = [50, 100, 300] as const;
+
+/* mUSDC anchors $1. OPN's USD value is derived from the pool's spot
+ * ratio. Returns a uint256 in 6-decimal mUSDC units, so formatMUSDC
+ * renders it directly as a dollar value. */
+function usdOfOPN(amountOPN: bigint, reserveOPN: bigint, reserveMUSDC: bigint): bigint {
+  if (reserveOPN === 0n) return 0n;
+  return (amountOPN * reserveMUSDC) / reserveOPN;
+}
 
 export function SwapPanel() {
   const chainId = useChainId();
@@ -43,27 +50,32 @@ export function SwapPanel() {
   const [direction, setDirection] = useState<Direction>('opn-to-musdc');
   const [amountIn, setAmountIn] = useState('');
   const [slippageBps, setSlippageBps] = useState(100); // 1.00%
+  const [slippageOpen, setSlippageOpen] = useState(false);
+  const [customSlippage, setCustomSlippage] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const { writeContractAsync } = useWriteContract();
 
-  // ----- Reads -----
+  /* ----- Reads ----- */
   const opnIsInput = direction === 'opn-to-musdc';
+  const fromUnit = opnIsInput ? 'OPN' : 'mUSDC';
+  const toUnit = opnIsInput ? 'mUSDC' : 'OPN';
 
-  const { data: balOPN } = useBalance({
+  const { data: bal } = useBalance({
     address: user,
-    query: { enabled: Boolean(user && opnIsInput), refetchInterval: 5000 },
+    query: { enabled: Boolean(user), refetchInterval: 5000 },
   });
-
   const { data: balMUSDC } = useReadContract({
     address: mUSDC ?? undefined,
     abi: mockUSDCAbi,
     functionName: 'balanceOf',
     args: user ? [user] : undefined,
-    query: { enabled: Boolean(mUSDC && user && !opnIsInput), refetchInterval: 5000 },
+    query: { enabled: Boolean(mUSDC && user), refetchInterval: 5000 },
   });
+  const balOPNValue = bal?.value;
+  const balMUSDCValue = balMUSDC as bigint | undefined;
 
   const { data: allowanceRaw } = useReadContract({
     address: mUSDC ?? undefined,
@@ -74,7 +86,17 @@ export function SwapPanel() {
   });
   const allowance = (allowanceRaw as bigint | undefined) ?? 0n;
 
-  // Parse amount in (raw bigint, units matching the input token).
+  const { data: reservesRaw } = useReadContract({
+    address: pair ?? undefined,
+    abi: openSwapPairAbi,
+    functionName: 'getReserves',
+    query: { enabled: Boolean(pair), refetchInterval: 5000 },
+  });
+  const reservesTuple = reservesRaw as readonly [bigint, bigint, number] | undefined;
+  const reserveOPN = reservesTuple?.[0] ?? 0n;
+  const reserveMUSDC = reservesTuple?.[1] ?? 0n;
+
+  /* ----- Derived ----- */
   const parsedAmountIn: bigint | null = useMemo(() => {
     if (!amountIn) return null;
     try {
@@ -97,35 +119,74 @@ export function SwapPanel() {
   const quote = quoteRaw as bigint | undefined;
   const minOut = quote ? applySlippage(quote, slippageBps) : undefined;
 
-  // ----- MAX -----
-  const primaryMax: bigint | undefined = useMemo(() => {
+  // Spot rate "1 OPN = X mUSDC" (mUSDC units per 1 OPN)
+  const spotRateMUSDCperOPN: bigint = useMemo(() => {
+    if (reserveOPN === 0n) return 0n;
+    return (10n ** 18n * reserveMUSDC) / reserveOPN;
+  }, [reserveOPN, reserveMUSDC]);
+
+  // USD value of the FROM amount, in mUSDC (6-decimal) units
+  const fromUSD: bigint = useMemo(() => {
+    if (!parsedAmountIn || parsedAmountIn <= 0n) return 0n;
+    return opnIsInput ? usdOfOPN(parsedAmountIn, reserveOPN, reserveMUSDC) : parsedAmountIn;
+  }, [parsedAmountIn, opnIsInput, reserveOPN, reserveMUSDC]);
+
+  const toUSD: bigint = useMemo(() => {
+    if (!quote || quote <= 0n) return 0n;
+    return opnIsInput ? quote : usdOfOPN(quote, reserveOPN, reserveMUSDC);
+  }, [quote, opnIsInput, reserveOPN, reserveMUSDC]);
+
+  /* ----- MAX -----  */
+  const fromMax: bigint | undefined = useMemo(() => {
     if (opnIsInput) {
-      if (!balOPN) return undefined;
-      const m = balOPN.value - GAS_RESERVE_WEI;
+      if (balOPNValue === undefined) return undefined;
+      const m = balOPNValue - GAS_RESERVE_WEI;
       return m > 0n ? m : 0n;
     }
-    return balMUSDC as bigint | undefined;
-  }, [opnIsInput, balOPN, balMUSDC]);
+    return balMUSDCValue;
+  }, [opnIsInput, balOPNValue, balMUSDCValue]);
 
-  const primaryMaxLabel = 'Wallet';
-  const primaryMaxFormatted = primaryMax === undefined
+  const fromBalanceFmt = opnIsInput
+    ? balOPNValue === undefined
+      ? '—'
+      : `${formatOPN(balOPNValue)} OPN`
+    : balMUSDCValue === undefined
     ? '—'
-    : opnIsInput
-    ? `${formatOPN(primaryMax)} OPN`
-    : `${formatMUSDC(primaryMax)} mUSDC`;
+    : `${formatMUSDC(balMUSDCValue)} mUSDC`;
 
-  const onMaxPrimary = () => {
-    if (!primaryMax) return;
-    setAmountIn(opnIsInput ? formatOPN(primaryMax, 18) : formatMUSDC(primaryMax, 6));
-  };
+  const toBalanceFmt = opnIsInput
+    ? balMUSDCValue === undefined
+      ? '—'
+      : `${formatMUSDC(balMUSDCValue)} mUSDC`
+    : balOPNValue === undefined
+    ? '—'
+    : `${formatOPN(balOPNValue)} OPN`;
 
-  // ----- Flip -----
+  /* ----- Actions ----- */
   const flip = () => {
     setDirection((d) => (d === 'opn-to-musdc' ? 'musdc-to-opn' : 'opn-to-musdc'));
     setAmountIn('');
     setError(null);
     setPhase('idle');
     setTxHash(undefined);
+  };
+
+  const onMaxFrom = () => {
+    if (!fromMax) return;
+    setAmountIn(opnIsInput ? formatOPN(fromMax, 18) : formatMUSDC(fromMax, 6));
+  };
+
+  const onSelectPreset = (bps: number) => {
+    setSlippageBps(bps);
+    setCustomSlippage('');
+  };
+
+  const onCustomSlippage = (s: string) => {
+    setCustomSlippage(s);
+    const n = parseFloat(s);
+    if (!Number.isFinite(n) || n <= 0) return;
+    const bps = Math.max(1, Math.min(5000, Math.round(n * 100)));
+    setSlippageBps(bps);
   };
 
   const reset = () => {
@@ -135,20 +196,13 @@ export function SwapPanel() {
     setTxHash(undefined);
   };
 
-  // Reset transient phase when direction changes.
   useEffect(() => {
-    if (phase === 'success' || phase === 'pending' || phase === 'signing' || phase === 'approving') {
-      reset();
-    }
+    if (phase !== 'idle') reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction]);
 
   const busy = phase === 'approving' || phase === 'signing' || phase === 'pending';
-
-  const needsApproval =
-    !opnIsInput && parsedAmountIn !== null && allowance < parsedAmountIn;
-
-  const ctaLabel = needsApproval ? 'Approve mUSDC' : opnIsInput ? 'Swap' : 'Swap';
+  const needsApproval = !opnIsInput && parsedAmountIn !== null && allowance < parsedAmountIn;
 
   const onSubmit = async () => {
     if (!pair || !publicClient) {
@@ -160,17 +214,12 @@ export function SwapPanel() {
       return;
     }
     if (minOut === undefined) {
-      setError('Waiting for quote — try again');
+      setError('Waiting for quote — try again.');
       return;
     }
     setError(null);
     try {
-      // mUSDC → OPN: ensure allowance.
-      if (!opnIsInput && allowance < parsedAmountIn) {
-        if (!mUSDC) {
-          setError('mUSDC address not found');
-          return;
-        }
+      if (needsApproval && mUSDC) {
         setPhase('approving');
         const approveHash = await writeContractAsync({
           address: mUSDC,
@@ -210,103 +259,229 @@ export function SwapPanel() {
     }
   };
 
-  const status =
-    error ? `Error: ${error}` :
-    phase === 'approving' ? 'Approve in wallet…' :
-    phase === 'signing' ? 'Confirm swap in wallet…' :
-    phase === 'pending' ? 'Pending…' :
-    phase === 'success' ? 'Swapped ✓' :
-    '';
-  const explorer = txHash ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}` : null;
+  const ctaLabel = (() => {
+    if (busy) {
+      if (phase === 'approving') return 'Approving mUSDC…';
+      if (phase === 'signing') return 'Confirm in wallet…';
+      if (phase === 'pending') return 'Swapping…';
+    }
+    if (!user) return 'Connect wallet';
+    if (!pair) return 'No deployment';
+    if (parsedAmountIn === null || parsedAmountIn <= 0n) return 'Enter an amount';
+    if (fromMax !== undefined && parsedAmountIn > fromMax) return `Insufficient ${fromUnit}`;
+    if (needsApproval) return 'Approve mUSDC & Swap';
+    return 'Swap';
+  })();
 
-  const fromUnit = opnIsInput ? 'OPN' : 'mUSDC';
-  const toUnit = opnIsInput ? 'mUSDC' : 'OPN';
-  const quoteText = quote === undefined
-    ? ''
-    : opnIsInput
-    ? formatMUSDC(quote, 6)
-    : formatOPN(quote, 8);
+  const ctaDisabled =
+    busy ||
+    !pair ||
+    !user ||
+    parsedAmountIn === null ||
+    parsedAmountIn <= 0n ||
+    (fromMax !== undefined && parsedAmountIn > fromMax);
+
+  const quoteText = quote === undefined ? '' : opnIsInput ? formatMUSDC(quote, 6) : formatOPN(quote, 8);
   const minOutText = minOut === undefined
     ? '—'
     : opnIsInput
     ? `${formatMUSDC(minOut)} mUSDC`
     : `${formatOPN(minOut)} OPN`;
 
-  return (
-    <section className="relative overflow-hidden rounded-xl bg-white p-6">
+  const spotRateText =
+    spotRateMUSDCperOPN === 0n
+      ? '—'
+      : `1 OPN ≈ ${formatMUSDC(spotRateMUSDCperOPN)} mUSDC`;
 
-      <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
-          <ArrowLeftRight className="h-5 w-5" aria-hidden />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold">Swap</h3>
-          <p className="text-sm text-zinc-800">Trade native OPN ↔ mUSDC. 0.30% fee retained for LPs.</p>
-        </div>
+  const explorer = txHash ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}` : null;
+
+  return (
+    <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
+      {/* Header */}
+      <header className="mb-3 flex items-center justify-between">
+        <h3 className="text-base font-semibold">Swap</h3>
+        <button
+          type="button"
+          onClick={() => setSlippageOpen((v) => !v)}
+          className="flex items-center gap-1 rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-100"
+          aria-label="Slippage settings"
+        >
+          <Settings className="h-4 w-4" aria-hidden />
+          {slippageOpen ? (
+            <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden />
+          )}
+        </button>
       </header>
 
-      <div className="space-y-4">
-        <TokenInput
-          label="From"
-          value={amountIn}
-          onChange={setAmountIn}
-          unit={fromUnit}
-          disabled={busy}
-          maxValue={primaryMax}
-          maxLabel={primaryMaxLabel}
-          maxFormatted={primaryMaxFormatted}
-          onMax={onMaxPrimary}
-          accent="emerald"
-        />
+      {slippageOpen && (
+        <div className="mb-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mb-2 text-xs font-medium text-zinc-600">Slippage tolerance</div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {SLIPPAGE_PRESETS_BPS.map((bps) => {
+              const active = slippageBps === bps && customSlippage === '';
+              return (
+                <button
+                  key={bps}
+                  type="button"
+                  onClick={() => onSelectPreset(bps)}
+                  className={
+                    'rounded-lg px-2.5 py-1 text-xs font-medium transition ' +
+                    (active
+                      ? 'bg-black text-white'
+                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100')
+                  }
+                >
+                  {(bps / 100).toFixed(bps % 100 === 0 ? 1 : 2)}%
+                </button>
+              );
+            })}
+            <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-0.5">
+              <input
+                value={customSlippage}
+                onChange={(e) => onCustomSlippage(e.target.value)}
+                placeholder="Custom"
+                inputMode="decimal"
+                className="w-16 bg-transparent text-xs outline-none placeholder-zinc-400"
+              />
+              <span className="text-xs text-zinc-500">%</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={flip}
+      {/* From (Sell) card */}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div className="mb-1.5 text-xs font-medium text-zinc-500">Sell</div>
+        <div className="flex items-center gap-3">
+          <input
+            value={amountIn}
+            onChange={(e) => setAmountIn(e.target.value)}
+            placeholder="0"
+            inputMode="decimal"
             disabled={busy}
-            aria-label="Flip swap direction"
-            className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-zinc-900 hover:bg-zinc-100 disabled:opacity-50"
-          >
-            ⇅
-          </button>
+            className="min-w-0 flex-1 bg-transparent text-2xl sm:text-3xl font-medium outline-none placeholder-zinc-300 disabled:opacity-50"
+          />
+          <TokenPill symbol={fromUnit} />
         </div>
-
-        <TokenInput
-          label="To (estimated)"
-          value={quoteText}
-          unit={toUnit}
-          disabled={busy}
-          accent="sky"
-        />
-
-        <SlippageSelector valueBps={slippageBps} onChange={setSlippageBps} disabled={busy} />
-
-        <div className="text-xs text-zinc-700">
-          Min received at {(slippageBps / 100).toFixed(2)}% slippage: <span className="text-zinc-900">{minOutText}</span>
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
+          <span>${formatMUSDC(fromUSD)}</span>
+          <div className="flex items-center gap-2">
+            <span>Balance: {fromBalanceFmt}</span>
+            <button
+              type="button"
+              onClick={onMaxFrom}
+              disabled={busy || !fromMax || fromMax === 0n}
+              className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[10px] font-semibold text-black hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              MAX
+            </button>
+          </div>
         </div>
+      </div>
 
+      {/* Flip button */}
+      <div className="-my-2 flex justify-center">
         <button
-          onClick={onSubmit}
-          disabled={busy || !pair || !parsedAmountIn || parsedAmountIn <= 0n}
-          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
+          type="button"
+          onClick={flip}
+          disabled={busy}
+          aria-label="Flip swap direction"
+          className="z-10 rounded-xl border border-zinc-200 bg-white p-2 text-black shadow-sm hover:bg-zinc-50 disabled:opacity-50"
         >
-          {busy ? 'Working…' : ctaLabel}
+          <ArrowDown className="h-4 w-4" aria-hidden />
         </button>
+      </div>
 
-        {status && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-900">
-            <span>{status}</span>
-            {explorer && (
-              <a className="text-emerald-700 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
-                view tx ↗
-              </a>
-            )}
-            {phase === 'success' && (
-              <button className="text-zinc-700 underline" onClick={reset}>reset</button>
-            )}
+      {/* To (Buy) card */}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <div className="mb-1.5 text-xs font-medium text-zinc-500">Buy</div>
+        <div className="flex items-center gap-3">
+          <input
+            value={quoteText}
+            placeholder="0"
+            readOnly
+            className="min-w-0 flex-1 bg-transparent text-2xl sm:text-3xl font-medium outline-none placeholder-zinc-300"
+          />
+          <TokenPill symbol={toUnit} />
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-zinc-500">
+          <span>${formatMUSDC(toUSD)}</span>
+          <span>Balance: {toBalanceFmt}</span>
+        </div>
+      </div>
+
+      {/* Rate + min received */}
+      <div className="mt-3 space-y-1 px-1 text-xs text-zinc-600">
+        <div className="flex items-center justify-between">
+          <span>{spotRateText}</span>
+          <span>Fee 0.30%</span>
+        </div>
+        {minOut !== undefined && (
+          <div className="flex items-center justify-between">
+            <span>Min received at {(slippageBps / 100).toFixed(2)}% slippage</span>
+            <span className="font-medium text-black">{minOutText}</span>
           </div>
         )}
       </div>
+
+      <button
+        onClick={onSubmit}
+        disabled={ctaDisabled}
+        className={
+          'mt-4 w-full rounded-2xl py-3 text-sm font-semibold transition ' +
+          (ctaDisabled
+            ? 'bg-zinc-200 text-zinc-500 cursor-not-allowed'
+            : 'bg-black text-white hover:bg-zinc-800')
+        }
+      >
+        {ctaLabel}
+      </button>
+
+      {/* Status row */}
+      {(error || phase === 'success' || (busy && txHash) || (phase !== 'idle' && txHash)) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          {error && <span className="text-red-600">Error: {error}</span>}
+          {phase === 'success' && <span className="text-emerald-600">Swap confirmed.</span>}
+          {explorer && (
+            <a
+              href={explorer}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-zinc-700 underline hover:text-black"
+            >
+              view tx <ExternalLink className="h-3 w-3" aria-hidden />
+            </a>
+          )}
+          {phase === 'success' && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-zinc-500 underline hover:text-black"
+            >
+              reset
+            </button>
+          )}
+        </div>
+      )}
     </section>
+  );
+}
+
+function TokenPill({ symbol }: { symbol: 'OPN' | 'mUSDC' }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-black">
+      <span
+        aria-hidden
+        className={
+          'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ' +
+          (symbol === 'OPN' ? 'bg-black' : 'bg-emerald-600')
+        }
+      >
+        {symbol === 'OPN' ? 'O' : '$'}
+      </span>
+      {symbol}
+    </span>
   );
 }

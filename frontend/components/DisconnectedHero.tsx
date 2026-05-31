@@ -42,7 +42,7 @@ export function DisconnectedHero() {
 
         <h1
           id="stratus-hero-title"
-          className="text-4xl font-extrabold leading-[1.05] tracking-tight text-zinc-950 md:text-5xl"
+          className="text-3xl font-extrabold leading-[1.05] tracking-tight text-zinc-950 sm:text-4xl md:text-5xl"
         >
           DeFi suite,
           <br />
@@ -70,7 +70,7 @@ export function DisconnectedHero() {
               type="button"
               onClick={openConnectModal}
               disabled={!mounted}
-              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-7 py-3.5 text-base font-bold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50"
+              className="mt-3 inline-flex items-center gap-2 rounded-xl bg-zinc-950 px-7 py-3.5 text-base font-bold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Connect Wallet
               <ArrowRight className="h-4 w-4" aria-hidden />

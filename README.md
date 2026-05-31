@@ -172,6 +172,26 @@ Health Factor badge. Risk banners appear when HF drops below 1.2
 (warning) or below 1.0 (liquidatable). The "Manage position" CTA
 deep-links back into the composer.
 
+### Price oracle (testnet stopgap)
+
+`contracts/PriceOracle.sol` is a single-price admin-set oracle for the
+OPN/mUSDC pair with a 1-hour propose-then-commit timelock. The current
+price surfaces as the bottom row of the Lending Dashboard's PoolStats
+card. v1 has no contract consumers; multi-asset lending will integrate
+it later when Pyth or another external feed is unavailable on IOPN.
+
+Owner-only CLI flow (current Hardhat 2.28 ignores positional script
+args, so the propose price is passed via the `ORACLE_PRICE` env var):
+
+```bash
+npm run oracle:show
+ORACLE_PRICE=105 npm run oracle:propose       # propose 105 mUSDC per OPN
+# ... wait at least one hour ...
+npm run oracle:commit
+# or, to back out before commit:
+npm run oracle:cancel
+```
+
 ### Deploying the frontend to Vercel
 
 1. Import the GitHub repo at https://vercel.com/new.

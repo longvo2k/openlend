@@ -41,4 +41,52 @@ describe("PriceOracle", () => {
       );
     });
   });
+
+  describe("proposeNewPrice", () => {
+    it("stores pending price and computes unlock time", async () => {
+      const { oracle } = await deploy();
+      const newPrice = ethers.parseEther("120");
+      const tx = await oracle.proposeNewPrice(newPrice);
+      const receipt = await tx.wait();
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+      const expectedUnlock = BigInt(block!.timestamp) + 3600n;
+      expect(await oracle.pendingPrice()).to.equal(newPrice);
+      expect(await oracle.pendingUnlockTime()).to.equal(expectedUnlock);
+    });
+
+    it("emits PriceProposed with the unlock time", async () => {
+      const { oracle } = await deploy();
+      const newPrice = ethers.parseEther("120");
+      const tx = await oracle.proposeNewPrice(newPrice);
+      const receipt = await tx.wait();
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+      const expectedUnlock = BigInt(block!.timestamp) + 3600n;
+      await expect(tx)
+        .to.emit(oracle, "PriceProposed")
+        .withArgs(newPrice, expectedUnlock);
+    });
+
+    it("reverts when a proposal is already pending", async () => {
+      const { oracle } = await deploy();
+      await oracle.proposeNewPrice(ethers.parseEther("120"));
+      await expect(
+        oracle.proposeNewPrice(ethers.parseEther("130")),
+      ).to.be.revertedWithCustomError(oracle, "ProposalAlreadyPending");
+    });
+
+    it("reverts on zero new price", async () => {
+      const { oracle } = await deploy();
+      await expect(oracle.proposeNewPrice(0)).to.be.revertedWithCustomError(
+        oracle,
+        "InvalidPrice",
+      );
+    });
+
+    it("reverts when called by non-owner", async () => {
+      const { oracle, alice } = await deploy();
+      await expect(
+        oracle.connect(alice).proposeNewPrice(ethers.parseEther("120")),
+      ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+    });
+  });
 });

@@ -24,9 +24,24 @@ contract PriceOracle is Ownable {
     uint256 public pendingUnlockTime;
 
     error InvalidPrice();
+    error ProposalAlreadyPending();
+
+    event PriceProposed(uint256 newPrice, uint256 unlockTime);
 
     constructor(uint256 initialPrice) Ownable(msg.sender) {
         if (initialPrice == 0) revert InvalidPrice();
         currentPrice = initialPrice;
+    }
+
+    /**
+     * @notice Owner proposes a new price. Cannot commit until
+     *         TIMELOCK_DELAY has elapsed.
+     */
+    function proposeNewPrice(uint256 newPrice) external onlyOwner {
+        if (newPrice == 0) revert InvalidPrice();
+        if (pendingUnlockTime != 0) revert ProposalAlreadyPending();
+        pendingPrice = newPrice;
+        pendingUnlockTime = block.timestamp + TIMELOCK_DELAY;
+        emit PriceProposed(newPrice, pendingUnlockTime);
     }
 }

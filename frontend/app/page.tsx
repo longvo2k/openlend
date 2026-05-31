@@ -24,14 +24,14 @@ export default function Home() {
     <div className="flex min-h-screen">
       <Sidebar route={route} onChange={setRoute} />
 
-      <main className="flex-1 min-w-0">
+      <main className="flex min-h-screen flex-1 flex-col min-w-0">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur sm:px-6">
           <div className="w-9 md:hidden" aria-hidden />
           <div className="text-sm text-zinc-700 truncate">{labelFor(route)}</div>
           <ConnectButton />
         </header>
 
-        <div className="px-4 py-5 sm:px-6 sm:py-6 max-w-4xl">
+        <div className="flex flex-1 flex-col">
           <ConnectGate>{renderRoute(route)}</ConnectGate>
         </div>
       </main>
@@ -39,44 +39,60 @@ export default function Home() {
   );
 }
 
+function ConnectedContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-4 py-5 sm:px-6 sm:py-6 max-w-4xl">{children}</div>
+  );
+}
+
 function renderRoute(route: ReturnType<typeof useHashRoute>['route']) {
   switch (route) {
     case 'lend:dashboard':
-      return <DashboardView />;
+      return <ConnectedContainer><DashboardView /></ConnectedContainer>;
     case 'lend:supply':
-      return <SinglePanel><ActionPanel kind="supply" /></SinglePanel>;
+      return <ConnectedContainer><SinglePanel><ActionPanel kind="supply" /></SinglePanel></ConnectedContainer>;
     case 'lend:withdraw':
-      return <SinglePanel><ActionPanel kind="withdraw" /></SinglePanel>;
+      return <ConnectedContainer><SinglePanel><ActionPanel kind="withdraw" /></SinglePanel></ConnectedContainer>;
     case 'lend:borrow':
-      return <SinglePanel><ActionPanel kind="borrow" /></SinglePanel>;
+      return <ConnectedContainer><SinglePanel><ActionPanel kind="borrow" /></SinglePanel></ConnectedContainer>;
     case 'lend:repay':
-      return <SinglePanel><ActionPanel kind="repay" /></SinglePanel>;
+      return <ConnectedContainer><SinglePanel><ActionPanel kind="repay" /></SinglePanel></ConnectedContainer>;
     case 'lend:liquidate':
-      return <LiquidatePanel />;
+      return <ConnectedContainer><LiquidatePanel /></ConnectedContainer>;
     case 'lend:history':
-      return <HistoryView />;
+      return <ConnectedContainer><HistoryView /></ConnectedContainer>;
     case 'swap:swap':
       return (
-        <div className="space-y-4 sm:space-y-6">
-          <SwapPoolStats />
-          <SinglePanel><SwapPanel /></SinglePanel>
-        </div>
+        <ConnectedContainer>
+          <div className="space-y-4 sm:space-y-6">
+            <SwapPoolStats />
+            <SinglePanel><SwapPanel /></SinglePanel>
+          </div>
+        </ConnectedContainer>
       );
     case 'swap:liquidity':
       return (
-        <div className="space-y-4 sm:space-y-6">
-          <SwapPoolStats />
-          <SinglePanel><LiquidityPanel /></SinglePanel>
-        </div>
+        <ConnectedContainer>
+          <div className="space-y-4 sm:space-y-6">
+            <SwapPoolStats />
+            <SinglePanel><LiquidityPanel /></SinglePanel>
+          </div>
+        </ConnectedContainer>
       );
     case 'swap:faucet':
       return (
-        <div className="space-y-4 sm:space-y-6">
-          <SinglePanel><FaucetPanel /></SinglePanel>
-        </div>
+        <ConnectedContainer>
+          <div className="space-y-4 sm:space-y-6">
+            <SinglePanel><FaucetPanel /></SinglePanel>
+          </div>
+        </ConnectedContainer>
       );
     case 'strategy:leveraged-lp':
-      return <SinglePanel><LeveragedLPPanel /></SinglePanel>;
+      return (
+        <ConnectedContainer>
+          <SinglePanel><LeveragedLPPanel /></SinglePanel>
+        </ConnectedContainer>
+      );
   }
 }
 

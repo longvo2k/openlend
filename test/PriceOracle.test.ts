@@ -118,4 +118,68 @@ describe("PriceOracle", () => {
       ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
     });
   });
+
+  describe("commitNewPrice", () => {
+    it("reverts when no proposal is pending", async () => {
+      const { oracle } = await deploy();
+      await expect(oracle.commitNewPrice()).to.be.revertedWithCustomError(
+        oracle,
+        "NoProposalPending",
+      );
+    });
+
+    it("reverts before the timelock elapses", async () => {
+      const { oracle } = await deploy();
+      await oracle.proposeNewPrice(ethers.parseEther("120"));
+      // Advance 59 minutes 50 seconds — still before the 1-hour unlock.
+      await ethers.provider.send("evm_increaseTime", [3590]);
+      await ethers.provider.send("evm_mine", []);
+      await expect(oracle.commitNewPrice()).to.be.revertedWithCustomError(
+        oracle,
+        "TimelockNotElapsed",
+      );
+    });
+
+    it("succeeds at the unlock time and updates currentPrice", async () => {
+      const { oracle, initialPrice } = await deploy();
+      const newPrice = ethers.parseEther("120");
+      await oracle.proposeNewPrice(newPrice);
+      // Advance exactly TIMELOCK_DELAY.
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine", []);
+      await expect(oracle.commitNewPrice())
+        .to.emit(oracle, "PriceCommitted")
+        .withArgs(initialPrice, newPrice);
+      expect(await oracle.currentPrice()).to.equal(newPrice);
+      expect(await oracle.pendingPrice()).to.equal(0n);
+      expect(await oracle.pendingUnlockTime()).to.equal(0n);
+    });
+
+    it("reverts when called by non-owner", async () => {
+      const { oracle, alice } = await deploy();
+      await oracle.proposeNewPrice(ethers.parseEther("120"));
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine", []);
+      await expect(
+        oracle.connect(alice).commitNewPrice(),
+      ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+    });
+
+    it("supports multiple propose-commit cycles", async () => {
+      const { oracle } = await deploy();
+      const p1 = ethers.parseEther("120");
+      const p2 = ethers.parseEther("130");
+      await oracle.proposeNewPrice(p1);
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine", []);
+      await oracle.commitNewPrice();
+      expect(await oracle.currentPrice()).to.equal(p1);
+
+      await oracle.proposeNewPrice(p2);
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine", []);
+      await oracle.commitNewPrice();
+      expect(await oracle.currentPrice()).to.equal(p2);
+    });
+  });
 });

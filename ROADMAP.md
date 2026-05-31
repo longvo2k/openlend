@@ -8,7 +8,6 @@ Making the Strategy section feel like a real product:
 
 - **Close & rebalance Leveraged LP** in one click
 - **Leverage-long looper** on OPN, up to 3x with a visual slider
-- **Pool charts** for TVL and utilization, sourced from the explorer event log
 - **Permit2** to kill the double-popup on Swap and Add Liquidity
 - **Price oracle** integration (Pyth if available on IOPN testnet, otherwise a clearly labelled timelocked admin-price fallback)
 - **Position dashboard** with live Health Factor and a close shortcut

@@ -11,6 +11,7 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { formatUnits, maxUint256, parseEther, parseUnits } from 'viem';
+import { Layers } from 'lucide-react';
 
 import {
   getLendingPoolAddress,
@@ -202,12 +203,12 @@ export function LeveragedLPPanel() {
   const hfFmt = formatHF(hfAfter);
   const hfClass =
     hfFmt.tone === 'red'
-      ? 'text-red-400'
+      ? 'text-red-700'
       : hfFmt.tone === 'yellow'
-      ? 'text-amber-300'
+      ? 'text-zinc-900'
       : hfFmt.tone === 'green'
-      ? 'text-emerald-400'
-      : 'text-zinc-300';
+      ? 'text-emerald-700'
+      : 'text-zinc-900';
 
   /* MAX helpers */
   const opnMax: bigint | undefined = bal
@@ -406,16 +407,15 @@ export function LeveragedLPPanel() {
   })();
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
 
       <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 text-lg font-bold">
-          ⏃
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <Layers className="h-5 w-5" aria-hidden />
         </div>
         <div>
           <h3 className="text-lg font-semibold">Leveraged LP</h3>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-800">
             Lock OPN as collateral, borrow OPN, pair with mUSDC, earn 0.30% LP
             fees on the borrowed capital.
           </p>
@@ -438,8 +438,8 @@ export function LeveragedLPPanel() {
         {/* LTV slider */}
         <div>
           <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
-            <span className="text-zinc-500">Borrow LTV</span>
-            <span className="text-zinc-300 font-medium">{(ltvBps / 100).toFixed(0)}%</span>
+            <span className="text-zinc-700">Borrow LTV</span>
+            <span className="text-zinc-900 font-medium">{(ltvBps / 100).toFixed(0)}%</span>
           </div>
           <input
             type="range"
@@ -449,9 +449,9 @@ export function LeveragedLPPanel() {
             value={ltvBps}
             onChange={(e) => setLtvBps(Number(e.target.value))}
             disabled={busy}
-            className="w-full accent-cyan-500"
+            className="w-full accent-black"
           />
-          <div className="mt-1 text-[11px] text-zinc-500">
+          <div className="mt-1 text-[11px] text-zinc-700">
             Borrowing {formatOPN(borrowOPN)} OPN @ 5% APR · protocol cap{' '}
             {PROTOCOL_LTV_BPS / 100}%
           </div>
@@ -460,18 +460,18 @@ export function LeveragedLPPanel() {
         {/* mUSDC input */}
         <div>
           <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
-            <span className="text-zinc-500">mUSDC to pair</span>
+            <span className="text-zinc-700">mUSDC to pair</span>
             <button
               type="button"
               disabled={busy || !musdcMax || musdcMax === 0n}
               onClick={() => musdcMax && setMusdcOverride(formatUnits(musdcMax, 6))}
-              className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-cyan-400 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
             >
               MAX
             </button>
           </div>
           <div
-            className={`flex items-center rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 focus-within:border-cyan-500 ${
+            className={`flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2.5 focus-within:border-amber-500 ${
               busy ? 'opacity-60' : ''
             }`}
           >
@@ -489,9 +489,9 @@ export function LeveragedLPPanel() {
               disabled={busy}
               className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none"
             />
-            <span className="ml-2 text-sm font-medium text-zinc-500">mUSDC</span>
+            <span className="ml-2 text-sm font-medium text-zinc-700">mUSDC</span>
           </div>
-          <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500">
+          <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-700">
             <span>
               Wallet: {musdcMaxFmt}
               {musdcOverride === null && ' · auto at pool ratio'}
@@ -500,7 +500,7 @@ export function LeveragedLPPanel() {
               <button
                 type="button"
                 onClick={() => setMusdcOverride(null)}
-                className="text-cyan-400 hover:opacity-80"
+                className="text-zinc-900 hover:opacity-80 underline"
                 disabled={busy}
               >
                 reset to auto
@@ -510,7 +510,7 @@ export function LeveragedLPPanel() {
         </div>
 
         {/* Preview */}
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-xs space-y-1">
+        <div className="rounded-lg border border-zinc-300 bg-white p-3 text-xs space-y-1">
           <Row label="Collateral added" value={`${formatOPN(collateralOPN)} OPN`} />
           <Row label="Debt added" value={`${formatOPN(borrowOPN)} OPN @ 5% APR`} />
           <Row
@@ -530,12 +530,12 @@ export function LeveragedLPPanel() {
 
         {/* Warning / error */}
         {validation.ok && validation.warning && (
-          <p className="rounded-lg border border-amber-700/50 bg-amber-950/30 p-3 text-xs text-amber-200">
+          <p className="rounded-lg border border-amber-300 bg-amber-100 p-3 text-xs text-amber-900">
             {validation.warning}
           </p>
         )}
         {!validation.ok && collateralText !== '' && (
-          <p className="rounded-lg border border-red-700/50 bg-red-950/30 p-3 text-xs text-red-200">
+          <p className="rounded-lg border border-red-700 bg-red-100 p-3 text-xs text-red-900">
             {validation.reason}
           </p>
         )}
@@ -544,7 +544,7 @@ export function LeveragedLPPanel() {
         <button
           onClick={onExecute}
           disabled={busy || !validation.ok}
-          className="w-full rounded-lg bg-cyan-500 py-2.5 font-semibold text-black transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-cyan-500"
+          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
         >
           {busy
             ? 'Working…'
@@ -576,17 +576,17 @@ export function LeveragedLPPanel() {
         </ul>
 
         {phase === 'error' && (
-          <div className="flex items-center justify-between rounded-lg border border-red-700/50 bg-red-950/30 p-3 text-xs text-red-200">
+          <div className="flex items-center justify-between rounded-lg border border-red-700 bg-red-100 p-3 text-xs text-red-900">
             <span>Error: {error}</span>
-            <button onClick={reset} className="text-red-300 underline">
+            <button onClick={reset} className="text-red-700 underline">
               reset
             </button>
           </div>
         )}
         {phase === 'success' && (
-          <div className="flex items-center justify-between rounded-lg border border-emerald-700/50 bg-emerald-950/30 p-3 text-xs text-emerald-200">
+          <div className="flex items-center justify-between rounded-lg border border-emerald-700 bg-emerald-100 p-3 text-xs text-emerald-900">
             <span>Position opened ✓ — check Dashboard for the updated HF.</span>
-            <button onClick={reset} className="text-emerald-300 underline">
+            <button onClick={reset} className="text-emerald-700 underline">
               reset
             </button>
           </div>
@@ -618,20 +618,20 @@ function Field({
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
-        <span className="text-zinc-500">{label}</span>
+        <span className="text-zinc-700">{label}</span>
         {onMax && (
           <button
             type="button"
             disabled={disabled || !maxValue || maxValue === 0n}
             onClick={onMax}
-            className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-cyan-400 hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
           >
             MAX
           </button>
         )}
       </div>
       <div
-        className={`flex items-center rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 focus-within:border-cyan-500 ${
+        className={`flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2.5 focus-within:border-amber-500 ${
           disabled ? 'opacity-60' : ''
         }`}
       >
@@ -643,10 +643,10 @@ function Field({
           disabled={disabled}
           className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none"
         />
-        <span className="ml-2 text-sm font-medium text-zinc-500">{unit}</span>
+        <span className="ml-2 text-sm font-medium text-zinc-700">{unit}</span>
       </div>
       {maxFormatted && (
-        <div className="mt-1 text-[11px] text-zinc-500">Wallet: {maxFormatted}</div>
+        <div className="mt-1 text-[11px] text-zinc-700">Wallet: {maxFormatted}</div>
       )}
     </div>
   );
@@ -663,8 +663,8 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-zinc-500">{label}</span>
-      <span className={`tabular-nums ${valueClass ?? 'text-zinc-200'}`}>{value}</span>
+      <span className="text-zinc-700">{label}</span>
+      <span className={`tabular-nums ${valueClass ?? 'text-black'}`}>{value}</span>
     </div>
   );
 }
@@ -695,16 +695,16 @@ function StepRow({
       : '○';
   const text =
     state === 'done'
-      ? 'text-emerald-300'
+      ? 'text-emerald-700'
       : state === 'failed'
-      ? 'text-red-300'
+      ? 'text-red-700'
       : state === 'sign'
-      ? 'text-amber-300'
+      ? 'text-zinc-900'
       : state === 'pending'
-      ? 'text-cyan-300'
+      ? 'text-zinc-900'
       : state === 'skipped'
       ? 'text-zinc-600'
-      : 'text-zinc-500';
+      : 'text-zinc-700';
   const detail =
     state === 'sign'
       ? '(confirm in wallet…)'
@@ -719,10 +719,10 @@ function StepRow({
     <li className="flex items-center gap-2">
       <span className={`${text} w-3 text-center`}>{glyph}</span>
       <span className={text}>{label}</span>
-      {detail && <span className="text-zinc-600">{detail}</span>}
+      {detail && <span className="text-zinc-700">{detail}</span>}
       {explorer && (
         <a
-          className="text-zinc-400 underline hover:text-zinc-200"
+          className="text-zinc-900 underline hover:text-black"
           target="_blank"
           rel="noopener noreferrer"
           href={explorer}

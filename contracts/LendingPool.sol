@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-/// @title OpenLend single-asset native-OPN lending pool
+/// @title Stratus Lend — single-asset native-OPN lending pool
 contract LendingPool is ReentrancyGuard {
     // ----- Constants -----
     uint256 public constant RATE_BPS = 500;            // 5.00% APR linear

@@ -11,6 +11,8 @@ import {
   usePublicClient,
 } from 'wagmi';
 import { formatUnits } from 'viem';
+import type { LucideIcon } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, ArrowUpRight, Check } from 'lucide-react';
 import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
 import { iopnTestnet } from '../lib/chains';
 import { formatOPN, parseOPN } from '../lib/format';
@@ -23,27 +25,31 @@ interface Props {
 
 const ACCENT: Record<
   Kind,
-  { text: string; bar: string; iconBg: string }
+  { text: string; bar: string; iconBg: string; icon: string }
 > = {
   supply: {
-    text: 'text-emerald-400',
-    bar: 'from-emerald-500/60',
-    iconBg: 'bg-emerald-500/10',
+    text: 'text-emerald-700',
+    bar: 'from-amber-500/60',
+    iconBg: 'bg-zinc-100',
+    icon: 'text-black',
   },
   withdraw: {
-    text: 'text-sky-400',
-    bar: 'from-sky-500/60',
-    iconBg: 'bg-sky-500/10',
+    text: 'text-sky-700',
+    bar: 'from-amber-500/60',
+    iconBg: 'bg-zinc-100',
+    icon: 'text-black',
   },
   borrow: {
-    text: 'text-amber-400',
+    text: 'text-zinc-900',
     bar: 'from-amber-500/60',
-    iconBg: 'bg-amber-500/10',
+    iconBg: 'bg-zinc-100',
+    icon: 'text-black',
   },
   repay: {
-    text: 'text-violet-400',
-    bar: 'from-violet-500/60',
-    iconBg: 'bg-violet-500/10',
+    text: 'text-violet-700',
+    bar: 'from-amber-500/60',
+    iconBg: 'bg-zinc-100',
+    icon: 'text-black',
   },
 };
 
@@ -58,7 +64,7 @@ const META: Record<
     secondaryLabel?: string;
     secondaryUnit?: 'OPN';
     ctaLabel: string;
-    icon: string;
+    icon: LucideIcon;
   }
 > = {
   supply: {
@@ -68,7 +74,7 @@ const META: Record<
     primaryUnit: 'OPN',
     primaryMaxLabel: 'Wallet',
     ctaLabel: 'Supply',
-    icon: '↓',
+    icon: ArrowDownToLine,
   },
   withdraw: {
     title: 'Withdraw',
@@ -77,7 +83,7 @@ const META: Record<
     primaryUnit: 'shares',
     primaryMaxLabel: 'Available',
     ctaLabel: 'Withdraw',
-    icon: '↑',
+    icon: ArrowUpFromLine,
   },
   borrow: {
     title: 'Borrow',
@@ -88,7 +94,7 @@ const META: Record<
     secondaryLabel: 'Amount to borrow',
     secondaryUnit: 'OPN',
     ctaLabel: 'Borrow',
-    icon: '↗',
+    icon: ArrowUpRight,
   },
   repay: {
     title: 'Repay',
@@ -97,7 +103,7 @@ const META: Record<
     primaryUnit: 'OPN',
     primaryMaxLabel: 'Outstanding',
     ctaLabel: 'Repay',
-    icon: '✓',
+    icon: Check,
   },
 };
 
@@ -266,20 +272,16 @@ export function ActionPanel({ kind }: Props) {
   const busy = phase === 'signing' || phase === 'pending';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accent.bar} via-transparent to-transparent`}
-      />
-
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
       <header className="flex items-start gap-3 mb-1">
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accent.iconBg} ${accent.text} text-lg font-bold`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accent.iconBg} ${accent.icon}`}
         >
-          {meta.icon}
+          {(() => { const Icon = meta.icon; return <Icon className="h-5 w-5" aria-hidden />; })()}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold leading-tight">{meta.title}</h3>
-          <p className="mt-0.5 text-sm text-zinc-400">{meta.description}</p>
+          <p className="mt-0.5 text-sm text-zinc-800">{meta.description}</p>
         </div>
       </header>
 
@@ -292,7 +294,7 @@ export function ActionPanel({ kind }: Props) {
           disabled={busy}
           maxLabel={meta.primaryMaxLabel}
           maxValue={primaryMax}
-          maxAccent={accent.text}
+          maxAccent="text-black"
           onMax={() => primaryMax && setPrimary(formatUnits(primaryMax, 18))}
         />
 
@@ -309,13 +311,13 @@ export function ActionPanel({ kind }: Props) {
         <button
           onClick={onSubmit}
           disabled={busy || !pool}
-          className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500"
+          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
         >
           {busy ? 'Working…' : meta.ctaLabel}
         </button>
 
         {status && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-900">
             <span>{status}</span>
             {explorer && (
               <a
@@ -328,7 +330,7 @@ export function ActionPanel({ kind }: Props) {
               </a>
             )}
             {phase === 'success' && (
-              <button className="text-zinc-500 underline" onClick={reload}>
+              <button className="text-zinc-700 underline" onClick={reload}>
                 reset
               </button>
             )}
@@ -373,20 +375,20 @@ function Field({
   return (
     <div>
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-wide">
-        <span className="text-zinc-500">{label}</span>
+        <span className="text-zinc-700">{label}</span>
         {hasMax && (
           <button
             type="button"
             disabled={maxDisabled}
             onClick={onMax}
-            className={`rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wider transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 ${maxAccent ?? ''}`}
+            className={`rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30 ${maxAccent ?? ''}`}
           >
             MAX
           </button>
         )}
       </div>
       <div
-        className={`flex items-center rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 transition focus-within:border-emerald-500 ${
+        className={`flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2.5 transition focus-within:border-amber-500 ${
           disabled ? 'opacity-50' : ''
         }`}
       >
@@ -398,10 +400,10 @@ function Field({
           disabled={disabled}
           className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none"
         />
-        <span className="ml-2 text-sm font-medium text-zinc-500">{unit}</span>
+        <span className="ml-2 text-sm font-medium text-zinc-700">{unit}</span>
       </div>
       {hasMax && (
-        <div className="mt-1 text-[11px] text-zinc-500">
+        <div className="mt-1 text-[11px] text-zinc-700">
           {maxLabel}:{' '}
           {maxValue === undefined
             ? '—'

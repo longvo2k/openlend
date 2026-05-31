@@ -24,15 +24,15 @@ const KIND_META: Record<EventKind, KindMeta> = {
 };
 
 const FLOW_TEXT: Record<KindMeta['flow'], string> = {
-  in: 'text-emerald-400',
-  out: 'text-sky-400',
-  risk: 'text-red-400',
+  in: 'text-emerald-700',
+  out: 'text-sky-700',
+  risk: 'text-red-700',
 };
 
 const FLOW_BG: Record<KindMeta['flow'], string> = {
-  in: 'bg-emerald-500/10',
-  out: 'bg-sky-500/10',
-  risk: 'bg-red-500/10',
+  in: 'bg-zinc-100',
+  out: 'bg-zinc-100',
+  risk: 'bg-zinc-100',
 };
 
 const SIGN: Record<KindMeta['flow'], string> = {
@@ -63,17 +63,16 @@ export function HistoryView() {
   const { data: events, isLoading, error, refetch, isFetching } = useUserHistory();
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-zinc-400/40 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
 
       <header className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-700/30 text-zinc-300 text-lg font-bold">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-black text-lg font-bold">
             ≡
           </div>
           <div className="min-w-0">
             <h3 className="text-lg font-semibold">Activity</h3>
-            <p className="mt-0.5 text-sm text-zinc-400">
+            <p className="mt-0.5 text-sm text-zinc-800">
               Your past supplies, borrows, repays, and liquidations.
             </p>
           </div>
@@ -82,14 +81,14 @@ export function HistoryView() {
           type="button"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="rounded-md border border-zinc-700 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-300 transition hover:bg-zinc-800 disabled:opacity-50"
+          className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs text-zinc-900 transition hover:bg-zinc-100 disabled:opacity-50"
         >
           {isFetching ? '…' : 'Refresh'}
         </button>
       </header>
 
       {error && (
-        <p className="text-sm text-red-300">
+        <p className="text-sm text-red-700">
           Failed to load history: {error instanceof Error ? error.message : String(error)}
         </p>
       )}
@@ -99,21 +98,21 @@ export function HistoryView() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-12 animate-pulse rounded-lg border border-zinc-800 bg-zinc-950/40"
+              className="h-12 animate-pulse rounded-lg border border-zinc-200 bg-zinc-100"
             />
           ))}
         </div>
       )}
 
       {events && events.length === 0 && !isLoading && (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-zinc-700">
           No activity yet. Your supplies, borrows, repays, and liquidations
           on the IOPN testnet pool will appear here.
         </p>
       )}
 
       {events && events.length > 0 && (
-        <ul className="divide-y divide-zinc-800/80">
+        <ul className="divide-y divide-zinc-200">
           {events.map((e) => (
             <Row key={`${e.txHash}-${e.logIndex}`} event={e} />
           ))}
@@ -161,16 +160,16 @@ function Row({ event }: { event: HistoryEvent }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="truncate text-sm font-medium text-zinc-100">
+          <span className="truncate text-sm font-medium text-black">
             {meta.label}
           </span>
           <span
             className={`shrink-0 text-sm font-semibold tabular-nums ${flowText}`}
           >
-            {sign}{formatOPN(event.amount)} <span className="text-xs text-zinc-500">OPN</span>
+            {sign}{formatOPN(event.amount)} <span className="text-xs text-zinc-700">OPN</span>
           </span>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-500">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-zinc-700">
           <span>{formatRelative(event.timestamp)}</span>
           <span>·</span>
           <span>block #{event.blockNumber.toString()}</span>
@@ -182,7 +181,7 @@ function Row({ event }: { event: HistoryEvent }) {
           )}
           <span>·</span>
           <a
-            className="text-zinc-400 underline hover:text-zinc-200"
+            className="text-zinc-900 underline hover:text-black"
             href={explorer}
             target="_blank"
             rel="noopener noreferrer"

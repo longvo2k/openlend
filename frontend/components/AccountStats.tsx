@@ -2,6 +2,7 @@
 
 import { useAccount, useBalance, useChainId, useReadContract } from 'wagmi';
 import { formatUnits, maxUint256 } from 'viem';
+import { User } from 'lucide-react';
 import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
 import { formatOPN, formatHF } from '../lib/format';
 
@@ -32,18 +33,18 @@ export function AccountStats() {
   const hfFmt = formatHF(hf);
   const hfClass =
     hfFmt.tone === 'red'
-      ? 'text-red-400'
+      ? 'text-red-700'
       : hfFmt.tone === 'yellow'
-      ? 'text-amber-300'
+      ? 'text-zinc-900'
       : hfFmt.tone === 'green'
-      ? 'text-emerald-400'
-      : 'text-zinc-300';
+      ? 'text-emerald-700'
+      : 'text-zinc-900';
   const hfBarClass =
     hfFmt.tone === 'red'
-      ? 'bg-red-400'
+      ? 'bg-red-600'
       : hfFmt.tone === 'yellow'
-      ? 'bg-amber-300'
-      : 'bg-emerald-400';
+      ? 'bg-zinc-900'
+      : 'bg-emerald-600';
 
   // Fill: HF [0..2] → [0..1], clipped. ∞ → 100%.
   let hfFill = 0;
@@ -59,52 +60,38 @@ export function AccountStats() {
   const short = user ? `${user.slice(0, 6)}…${user.slice(-4)}` : '';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
 
       <header className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.25"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8" />
-          </svg>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <User className="h-[18px] w-[18px]" aria-hidden />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Your account</h2>
             {short && (
-              <code className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] sm:text-xs text-zinc-400">
+              <code className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] sm:text-xs text-black">
                 {short}
               </code>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-zinc-400">Wallet + position</p>
+          <p className="mt-0.5 text-sm text-zinc-800">Wallet + position</p>
         </div>
       </header>
 
       {/* Wallet balance — primary stat */}
       <div className="mt-6">
-        <div className="text-xs uppercase tracking-wide text-zinc-500">
+        <div className="text-xs uppercase tracking-wide text-zinc-700">
           Wallet balance
         </div>
         <div className="mt-1 text-2xl sm:text-3xl font-semibold tabular-nums">
           {formatOPN(bal?.value)}
-          <span className="ml-1 text-sm sm:text-base font-medium text-zinc-500">OPN</span>
+          <span className="ml-1 text-sm sm:text-base font-medium text-zinc-700">OPN</span>
         </div>
       </div>
 
       {/* Position breakdown */}
-      <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-zinc-800 pt-5 sm:grid-cols-3">
+      <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-zinc-200 pt-5 sm:grid-cols-3">
         <SmallStat
           label="Supply shares"
           value={isLoading ? '…' : formatOPN(shares)}
@@ -125,18 +112,18 @@ export function AccountStats() {
       {/* Health factor bar */}
       <div className="mt-6">
         <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide">
-          <span className="text-zinc-500">Health factor</span>
+          <span className="text-zinc-700">Health factor</span>
           <span className={`font-semibold tabular-nums ${hfClass}`}>
             {isLoading ? '…' : hfFmt.text}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
           <div
             className={`h-full ${hfBarClass} transition-all duration-500`}
             style={{ width: `${hfFill * 100}%` }}
           />
         </div>
-        <div className="mt-1 flex justify-between text-[10px] uppercase tracking-wider text-zinc-600">
+        <div className="mt-1 flex justify-between text-[10px] uppercase tracking-wider text-zinc-800">
           <span>liquidatable &lt; 1.0</span>
           <span>healthy</span>
         </div>
@@ -156,10 +143,10 @@ function SmallStat({
 }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-zinc-700">{label}</dt>
       <dd className="mt-0.5 text-base font-medium tabular-nums">
         {value}
-        <span className="ml-1 text-xs font-normal text-zinc-500">{unit}</span>
+        <span className="ml-1 text-xs font-normal text-zinc-700">{unit}</span>
       </dd>
     </div>
   );

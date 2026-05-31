@@ -25,9 +25,9 @@ export default function Home() {
       <Sidebar route={route} onChange={setRoute} />
 
       <main className="flex-1 min-w-0">
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur sm:px-6">
           <div className="w-9 md:hidden" aria-hidden />
-          <div className="text-sm text-zinc-400 truncate">{labelFor(route)}</div>
+          <div className="text-sm text-zinc-700 truncate">{labelFor(route)}</div>
           <ConnectButton />
         </header>
 
@@ -87,7 +87,7 @@ function SinglePanel({ children }: { children: React.ReactNode }) {
 function labelFor(route: ReturnType<typeof useHashRoute>['route']): string {
   const section = sectionOf(route);
   const sectionName =
-    section === 'lend' ? 'OpenLend' : section === 'swap' ? 'OpenSwap' : 'Strategy';
+    section === 'lend' ? 'Lend' : section === 'swap' ? 'Trade' : 'Strategy';
   const page = route.split(':')[1].replace(/^./, (c) => c.toUpperCase());
   return `${sectionName} · ${page}`;
 }

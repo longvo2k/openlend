@@ -29,7 +29,7 @@ import {
 type Direction = 'opn-to-musdc' | 'musdc-to-opn';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';
 
-const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+const GAS_RESERVE_WEI = 10_000_000_000_000_000n; // 0.01 OPN (~10 txs at 7 gwei)
 const SLIPPAGE_PRESETS_BPS = [50, 100, 300] as const;
 
 /* mUSDC anchors $1. OPN's USD value is derived from the pool's spot

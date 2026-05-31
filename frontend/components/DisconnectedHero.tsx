@@ -40,18 +40,20 @@ export function DisconnectedHero() {
           STRATUS
         </div>
 
-        <h1
-          id="stratus-hero-title"
-          className="text-3xl font-extrabold leading-[1.05] tracking-tight text-zinc-950 sm:text-4xl md:text-5xl"
-        >
-          DeFi suite,
-          <br />
-          on IOPN testnet.
-        </h1>
+        <div className="flex flex-col items-center gap-3">
+          <h1
+            id="stratus-hero-title"
+            className="text-3xl font-extrabold leading-[1.05] tracking-tight text-zinc-950 sm:text-4xl md:text-5xl"
+          >
+            DeFi suite,
+            <br />
+            on IOPN testnet.
+          </h1>
 
-        <p className="max-w-md text-base text-zinc-600">
-          Lend, swap, and run leveraged LP, all on one app.
-        </p>
+          <p className="max-w-md text-base text-zinc-600">
+            Lend, swap, and run leveraged LP, all on one app.
+          </p>
+        </div>
 
         <ul className="mt-1 flex flex-wrap items-center justify-center gap-2">
           {PILLS.map(({ label, icon: Icon }) => (
@@ -85,7 +87,7 @@ export function DisconnectedHero() {
               href="https://faucet.iopn.tech"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-zinc-900 underline-offset-2 hover:underline"
+              className="font-medium text-zinc-900 underline underline-offset-2 decoration-zinc-300 hover:decoration-zinc-900"
             >
               Get testnet tokens ↗
             </a>
@@ -98,7 +100,7 @@ export function DisconnectedHero() {
               href="https://testnet.iopn.tech"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-zinc-900 underline-offset-2 hover:underline"
+              className="font-medium text-zinc-900 underline underline-offset-2 decoration-zinc-300 hover:decoration-zinc-900"
             >
               View on explorer ↗
             </a>

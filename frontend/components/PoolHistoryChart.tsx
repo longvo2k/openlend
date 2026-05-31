@@ -11,8 +11,8 @@ import {
   CartesianGrid,
   Legend,
 } from 'recharts';
-import { useLendingPoolHistory, type PoolHistoryPoint } from '../lib/pool-history';
-import { formatOPN } from '../lib/format';
+import { useLendingPoolHistory, type PoolHistoryPoint } from '@/lib/pool-history';
+import { formatOPN } from '@/lib/format';
 
 const CHART_HEIGHT = 260;
 

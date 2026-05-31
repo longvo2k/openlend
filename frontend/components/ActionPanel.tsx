@@ -13,9 +13,9 @@ import {
 import { formatUnits } from 'viem';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowDownToLine, ArrowUpFromLine, ArrowUpRight, Check } from 'lucide-react';
-import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
-import { iopnTestnet } from '../lib/chains';
-import { formatOPN, parseOPN } from '../lib/format';
+import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
+import { iopnTestnet } from '@/lib/chains';
+import { formatOPN, parseOPN } from '@/lib/format';
 
 type Kind = 'supply' | 'withdraw' | 'borrow' | 'repay';
 

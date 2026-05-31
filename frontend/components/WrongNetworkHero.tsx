@@ -2,7 +2,7 @@
 
 import { useSwitchChain } from 'wagmi';
 import { ArrowRight } from 'lucide-react';
-import { iopnTestnet } from '../lib/chains';
+import { iopnTestnet } from '@/lib/chains';
 
 export function WrongNetworkHero() {
   const { switchChain, isPending } = useSwitchChain();

@@ -17,8 +17,8 @@ import {
   getPairAddress,
   mockUSDCAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { iopnTestnet } from '../../lib/chains';
+} from '@/lib/contract';
+import { iopnTestnet } from '@/lib/chains';
 import {
   formatLP,
   formatMUSDC,
@@ -26,7 +26,7 @@ import {
   parseLP,
   parseMUSDC,
   parseOPN,
-} from '../../lib/format';
+} from '@/lib/format';
 
 type Mode = 'add' | 'remove';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';

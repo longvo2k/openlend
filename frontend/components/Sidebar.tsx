@@ -17,7 +17,7 @@ import {
   Layers,
   Briefcase,
 } from 'lucide-react';
-import type { Route } from '../lib/route';
+import type { Route } from '@/lib/route';
 
 interface NavItem {
   route: Route;

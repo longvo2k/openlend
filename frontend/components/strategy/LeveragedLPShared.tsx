@@ -1,7 +1,7 @@
 'use client';
 
 import { parseUnits } from 'viem';
-import { iopnTestnet } from '../../lib/chains';
+import { iopnTestnet } from '@/lib/chains';
 
 /**
  * Reserve to deduct from MAX so the wallet still has OPN for gas.

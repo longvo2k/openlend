@@ -202,6 +202,7 @@ npm run oracle:cancel
    - `NEXT_PUBLIC_LENDING_POOL_ADDRESS_TESTNET` — deployed LendingPool
    - `NEXT_PUBLIC_OPENSWAP_PAIR_TESTNET` — deployed OpenSwapPair
    - `NEXT_PUBLIC_MOCK_USDC_TESTNET` — deployed MockUSDC
+   - `NEXT_PUBLIC_PRICE_ORACLE_TESTNET` — deployed PriceOracle
    - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` — *recommended*. Create a free
      project at https://cloud.walletconnect.com/ and paste the
      32-character ID. Without this the dApp still works (MetaMask /

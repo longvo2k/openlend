@@ -18,6 +18,7 @@ import { LiquidityPanel } from '../components/swap/LiquidityPanel';
 import { FaucetPanel } from '../components/swap/FaucetPanel';
 
 import { LeveragedLPPanel } from '../components/strategy/LeveragedLPPanel';
+import { PositionsDashboard } from '../components/strategy/PositionsDashboard';
 
 export default function Home() {
   const { isConnected } = useAccount();
@@ -96,6 +97,12 @@ function renderRoute(route: ReturnType<typeof useHashRoute>['route']) {
           <div className="space-y-4 sm:space-y-6">
             <SinglePanel><FaucetPanel /></SinglePanel>
           </div>
+        </ConnectedContainer>
+      );
+    case 'strategy:positions':
+      return (
+        <ConnectedContainer>
+          <PositionsDashboard />
         </ConnectedContainer>
       );
     case 'strategy:leveraged-lp':

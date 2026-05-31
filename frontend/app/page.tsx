@@ -1,7 +1,9 @@
 'use client';
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi';
 import { ConnectGate } from '../components/ConnectGate';
+import { DisconnectedHero } from '../components/DisconnectedHero';
 import { Sidebar } from '../components/Sidebar';
 import { useHashRoute, sectionOf } from '../lib/route';
 
@@ -18,7 +20,16 @@ import { FaucetPanel } from '../components/swap/FaucetPanel';
 import { LeveragedLPPanel } from '../components/strategy/LeveragedLPPanel';
 
 export default function Home() {
+  const { isConnected } = useAccount();
   const { route, setRoute } = useHashRoute();
+
+  if (!isConnected) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <DisconnectedHero />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">

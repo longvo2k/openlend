@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {
   ArrowDownToLine,
@@ -36,9 +37,14 @@ export function DisconnectedHero() {
       />
 
       <div className="relative flex max-w-3xl flex-col items-center gap-4 text-center">
-        <div className="text-sm font-extrabold tracking-[0.18em] text-zinc-900">
-          STRATUS
-        </div>
+        <Image
+          src="/stratus-logo.svg"
+          alt="Stratus"
+          width={240}
+          height={64}
+          priority
+          className="h-12 w-auto"
+        />
 
         <div className="flex flex-col items-center gap-3">
           <h1

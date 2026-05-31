@@ -35,7 +35,7 @@ export function DisconnectedHero() {
         }}
       />
 
-      <div className="relative flex max-w-xl flex-col items-center gap-4 text-center">
+      <div className="relative flex max-w-3xl flex-col items-center gap-4 text-center">
         <div className="text-sm font-extrabold tracking-[0.18em] text-zinc-900">
           STRATUS
         </div>

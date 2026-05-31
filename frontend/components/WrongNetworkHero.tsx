@@ -21,7 +21,7 @@ export function WrongNetworkHero() {
         }}
       />
 
-      <div className="relative flex max-w-xl flex-col items-center gap-4 text-center">
+      <div className="relative flex max-w-3xl flex-col items-center gap-4 text-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-900">
           Network warning
         </span>

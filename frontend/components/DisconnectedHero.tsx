@@ -45,9 +45,7 @@ export function DisconnectedHero() {
             id="stratus-hero-title"
             className="text-3xl font-extrabold leading-[1.05] tracking-tight text-zinc-950 sm:text-4xl md:text-5xl"
           >
-            DeFi suite,
-            <br />
-            on IOPN testnet.
+            DeFi suite, on IOPN testnet.
           </h1>
 
           <p className="max-w-md text-base text-zinc-600">

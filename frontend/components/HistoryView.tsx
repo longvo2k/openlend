@@ -1,8 +1,8 @@
 'use client';
 
-import { useUserHistory, type EventKind, type HistoryEvent } from '../lib/history';
-import { iopnTestnet } from '../lib/chains';
-import { formatOPN } from '../lib/format';
+import { useUserHistory, type EventKind, type HistoryEvent } from '@/lib/history';
+import { iopnTestnet } from '@/lib/chains';
+import { formatOPN } from '@/lib/format';
 
 interface KindMeta {
   label: string;

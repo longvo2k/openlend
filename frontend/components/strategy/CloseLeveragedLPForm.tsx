@@ -17,8 +17,8 @@ import {
   getPairAddress,
   lendingPoolAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { formatHF, formatLP, formatMUSDC, formatOPN } from '../../lib/format';
+} from '@/lib/contract';
+import { formatHF, formatLP, formatMUSDC, formatOPN } from '@/lib/format';
 import {
   GAS_RESERVE_WEI,
   LIQUIDATION_THRESHOLD_BPS,

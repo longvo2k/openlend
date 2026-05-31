@@ -2,8 +2,8 @@
 
 import { useChainId, useReadContracts } from 'wagmi';
 import { Database } from 'lucide-react';
-import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
-import { formatOPN, bpsToPct } from '../lib/format';
+import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
+import { formatOPN, bpsToPct } from '@/lib/format';
 
 export function PoolStats() {
   const chainId = useChainId();

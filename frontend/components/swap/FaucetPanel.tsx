@@ -9,9 +9,9 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { ExternalLink } from 'lucide-react';
-import { getMockUSDCAddress, mockUSDCAbi } from '../../lib/contract';
-import { iopnTestnet } from '../../lib/chains';
-import { formatMUSDC, parseMUSDC } from '../../lib/format';
+import { getMockUSDCAddress, mockUSDCAbi } from '@/lib/contract';
+import { iopnTestnet } from '@/lib/chains';
+import { formatMUSDC, parseMUSDC } from '@/lib/format';
 
 type Phase = 'idle' | 'signing' | 'pending' | 'success';
 

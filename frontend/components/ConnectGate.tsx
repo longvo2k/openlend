@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { useChainId } from 'wagmi';
-import { iopnTestnet } from '../lib/chains';
+import { iopnTestnet } from '@/lib/chains';
 import { WrongNetworkHero } from './WrongNetworkHero';
 
 interface Props {

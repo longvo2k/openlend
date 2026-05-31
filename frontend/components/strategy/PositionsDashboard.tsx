@@ -16,8 +16,8 @@ import {
   getPairAddress,
   lendingPoolAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { formatHF, formatLP, formatMUSDC, formatOPN } from '../../lib/format';
+} from '@/lib/contract';
+import { formatHF, formatLP, formatMUSDC, formatOPN } from '@/lib/format';
 
 const LIQUIDATION_THRESHOLD_BPS = 8000;
 

@@ -3,8 +3,8 @@
 import { useAccount, useBalance, useChainId, useReadContract } from 'wagmi';
 import { formatUnits, maxUint256 } from 'viem';
 import { User } from 'lucide-react';
-import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
-import { formatOPN, formatHF } from '../lib/format';
+import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
+import { formatOPN, formatHF } from '@/lib/format';
 
 export function AccountStats() {
   const chainId = useChainId();

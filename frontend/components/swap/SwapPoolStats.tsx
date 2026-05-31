@@ -2,8 +2,8 @@
 
 import { useAccount, useChainId, useReadContracts } from 'wagmi';
 import { Database } from 'lucide-react';
-import { openSwapPairAbi, getPairAddress } from '../../lib/contract';
-import { formatOPN, formatMUSDC, formatLP } from '../../lib/format';
+import { openSwapPairAbi, getPairAddress } from '@/lib/contract';
+import { formatOPN, formatMUSDC, formatLP } from '@/lib/format';
 
 export function SwapPoolStats() {
   const chainId = useChainId();

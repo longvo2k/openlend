@@ -1,28 +1,42 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
-import { ConnectGate } from '../components/ConnectGate';
-import { DisconnectedHero } from '../components/DisconnectedHero';
-import { Sidebar } from '../components/Sidebar';
-import { useHashRoute, sectionOf } from '../lib/route';
+import { ConnectGate } from '@/components/ConnectGate';
+import { DisconnectedHero } from '@/components/DisconnectedHero';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { Sidebar } from '@/components/Sidebar';
+import { useHashRoute, sectionOf } from '@/lib/route';
 
-import { DashboardView } from '../components/DashboardView';
-import { ActionPanel } from '../components/ActionPanel';
-import { LiquidatePanel } from '../components/LiquidatePanel';
-import { HistoryView } from '../components/HistoryView';
+import { DashboardView } from '@/components/DashboardView';
+import { ActionPanel } from '@/components/ActionPanel';
+import { LiquidatePanel } from '@/components/LiquidatePanel';
+import { HistoryView } from '@/components/HistoryView';
 
-import { SwapPoolStats } from '../components/swap/SwapPoolStats';
-import { SwapPanel } from '../components/swap/SwapPanel';
-import { LiquidityPanel } from '../components/swap/LiquidityPanel';
-import { FaucetPanel } from '../components/swap/FaucetPanel';
+import { SwapPoolStats } from '@/components/swap/SwapPoolStats';
+import { SwapPanel } from '@/components/swap/SwapPanel';
+import { LiquidityPanel } from '@/components/swap/LiquidityPanel';
+import { FaucetPanel } from '@/components/swap/FaucetPanel';
 
-import { LeveragedLPPanel } from '../components/strategy/LeveragedLPPanel';
-import { PositionsDashboard } from '../components/strategy/PositionsDashboard';
+import { LeveragedLPPanel } from '@/components/strategy/LeveragedLPPanel';
+import { PositionsDashboard } from '@/components/strategy/PositionsDashboard';
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  // Splash the branded loader until both React has hydrated AND wagmi
+  // has finished resolving the saved wallet session. Without the wagmi
+  // status check, a refresh with a previously connected wallet renders
+  // DisconnectedHero for the brief window between mount and reconnect,
+  // then snaps to the dashboard.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const { isConnected, status } = useAccount();
   const { route, setRoute } = useHashRoute();
+
+  if (!mounted || status === 'connecting' || status === 'reconnecting') {
+    return <LoadingScreen />;
+  }
 
   if (!isConnected) {
     return (

@@ -19,8 +19,8 @@ import {
   lendingPoolAbi,
   mockUSDCAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { formatHF, formatLP, formatMUSDC, formatOPN } from '../../lib/format';
+} from '@/lib/contract';
+import { formatHF, formatLP, formatMUSDC, formatOPN } from '@/lib/format';
 import {
   Field,
   GAS_RESERVE_WEI,

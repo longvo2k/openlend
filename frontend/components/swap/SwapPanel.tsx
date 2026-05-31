@@ -16,15 +16,15 @@ import {
   getPairAddress,
   mockUSDCAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { iopnTestnet } from '../../lib/chains';
+} from '@/lib/contract';
+import { iopnTestnet } from '@/lib/chains';
 import {
   applySlippage,
   formatMUSDC,
   formatOPN,
   parseMUSDC,
   parseOPN,
-} from '../../lib/format';
+} from '@/lib/format';
 
 type Direction = 'opn-to-musdc' | 'musdc-to-opn';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';

@@ -15,8 +15,8 @@ import {
   getPairAddress,
   lendingPoolAbi,
   openSwapPairAbi,
-} from '../../lib/contract';
-import { formatHF, formatLP, formatOPN } from '../../lib/format';
+} from '@/lib/contract';
+import { formatHF, formatLP, formatOPN } from '@/lib/format';
 import { LIQUIDATION_THRESHOLD_BPS, Row } from './LeveragedLPShared';
 import { OpenLeveragedLPForm } from './OpenLeveragedLPForm';
 import { CloseLeveragedLPForm } from './CloseLeveragedLPForm';

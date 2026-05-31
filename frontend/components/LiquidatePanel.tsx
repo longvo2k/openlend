@@ -8,9 +8,9 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { Zap } from 'lucide-react';
-import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
-import { iopnTestnet } from '../lib/chains';
-import { formatHF, formatOPN, parseOPN } from '../lib/format';
+import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
+import { iopnTestnet } from '@/lib/chains';
+import { formatHF, formatOPN, parseOPN } from '@/lib/format';
 
 type Phase = 'idle' | 'signing' | 'pending' | 'success';
 

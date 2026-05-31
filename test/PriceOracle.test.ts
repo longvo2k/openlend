@@ -89,4 +89,33 @@ describe("PriceOracle", () => {
       ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
     });
   });
+
+  describe("cancelProposal", () => {
+    it("clears the pending proposal and emits PriceProposalCanceled", async () => {
+      const { oracle } = await deploy();
+      const newPrice = ethers.parseEther("120");
+      await oracle.proposeNewPrice(newPrice);
+      await expect(oracle.cancelProposal())
+        .to.emit(oracle, "PriceProposalCanceled")
+        .withArgs(newPrice);
+      expect(await oracle.pendingPrice()).to.equal(0n);
+      expect(await oracle.pendingUnlockTime()).to.equal(0n);
+    });
+
+    it("reverts when there is no pending proposal", async () => {
+      const { oracle } = await deploy();
+      await expect(oracle.cancelProposal()).to.be.revertedWithCustomError(
+        oracle,
+        "NoProposalPending",
+      );
+    });
+
+    it("reverts when called by non-owner", async () => {
+      const { oracle, alice } = await deploy();
+      await oracle.proposeNewPrice(ethers.parseEther("120"));
+      await expect(
+        oracle.connect(alice).cancelProposal(),
+      ).to.be.revertedWithCustomError(oracle, "OwnableUnauthorizedAccount");
+    });
+  });
 });

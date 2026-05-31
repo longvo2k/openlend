@@ -3,6 +3,10 @@
 import { useUserHistory, type EventKind, type HistoryEvent } from '@/lib/history';
 import { iopnTestnet } from '@/lib/chains';
 import { formatOPN } from '@/lib/format';
+import { usePagination } from '@/lib/use-pagination';
+import { Pagination } from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 interface KindMeta {
   label: string;
@@ -61,6 +65,7 @@ function formatRelative(ts: number): string {
 
 export function HistoryView() {
   const { data: events, isLoading, error, refetch, isFetching } = useUserHistory();
+  const pagination = usePagination<HistoryEvent>(events ?? [], PAGE_SIZE);
 
   return (
     <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
@@ -112,11 +117,26 @@ export function HistoryView() {
       )}
 
       {events && events.length > 0 && (
-        <ul className="divide-y divide-zinc-200">
-          {events.map((e) => (
-            <Row key={`${e.txHash}-${e.logIndex}`} event={e} />
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y divide-zinc-200">
+            {pagination.pageItems.map((e) => (
+              <Row key={`${e.txHash}-${e.logIndex}`} event={e} />
+            ))}
+          </ul>
+
+          {pagination.hasMultiplePages && (
+            <Pagination
+              className="mt-4"
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              rangeStart={pagination.rangeStart}
+              rangeEnd={pagination.rangeEnd}
+              onPageChange={pagination.setPage}
+              ariaLabel="History pagination"
+            />
+          )}
+        </>
       )}
     </section>
   );

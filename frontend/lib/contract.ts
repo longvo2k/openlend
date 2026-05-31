@@ -1,10 +1,12 @@
 import LendingPoolJson from './abi/LendingPool.json';
 import OpenSwapPairJson from './abi/OpenSwapPair.json';
 import MockUSDCJson from './abi/MockUSDC.json';
+import PriceOracleJson from './abi/PriceOracle.json';
 
 export const lendingPoolAbi = LendingPoolJson.abi;
 export const openSwapPairAbi = OpenSwapPairJson.abi;
 export const mockUSDCAbi = MockUSDCJson.abi;
+export const priceOracleAbi = PriceOracleJson.abi;
 
 type Hex = `0x${string}`;
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
@@ -42,5 +44,11 @@ export function getPairAddress(chainId: number): Hex | null {
 export function getMockUSDCAddress(chainId: number): Hex | null {
   if (chainId === 984) return check(process.env.NEXT_PUBLIC_MOCK_USDC_TESTNET);
   if (chainId === 31337) return check(process.env.NEXT_PUBLIC_MOCK_USDC_LOCAL);
+  return null;
+}
+
+export function getPriceOracleAddress(chainId: number): Hex | null {
+  if (chainId === 984) return check(process.env.NEXT_PUBLIC_PRICE_ORACLE_TESTNET);
+  if (chainId === 31337) return check(process.env.NEXT_PUBLIC_PRICE_ORACLE_LOCAL);
   return null;
 }

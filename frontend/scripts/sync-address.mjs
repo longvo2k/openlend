@@ -50,9 +50,11 @@ function setKey(key, value) {
 setKey(`NEXT_PUBLIC_LENDING_POOL_ADDRESS_${SUFFIX}`, d.lendingPool);
 setKey(`NEXT_PUBLIC_OPENSWAP_PAIR_${SUFFIX}`, d.openSwapPair);
 setKey(`NEXT_PUBLIC_MOCK_USDC_${SUFFIX}`, d.mUSDC);
+setKey(`NEXT_PUBLIC_PRICE_ORACLE_${SUFFIX}`, d.priceOracle);
 
 fs.writeFileSync(envFile, current);
 console.log(`Wrote ${SUFFIX} addresses → ${envFile}`);
 if (d.lendingPool) console.log(`  NEXT_PUBLIC_LENDING_POOL_ADDRESS_${SUFFIX}=${d.lendingPool}`);
 if (d.openSwapPair) console.log(`  NEXT_PUBLIC_OPENSWAP_PAIR_${SUFFIX}=${d.openSwapPair}`);
 if (d.mUSDC) console.log(`  NEXT_PUBLIC_MOCK_USDC_${SUFFIX}=${d.mUSDC}`);
+if (d.priceOracle) console.log(`  NEXT_PUBLIC_PRICE_ORACLE_${SUFFIX}=${d.priceOracle}`);

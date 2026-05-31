@@ -23,16 +23,20 @@ import { LeveragedLPPanel } from '../components/strategy/LeveragedLPPanel';
 import { PositionsDashboard } from '../components/strategy/PositionsDashboard';
 
 export default function Home() {
-  // Splash the branded loader during SSR + the first client paint so the
-  // user does not see the empty/disconnected hero flicker before wagmi
-  // has settled the connection state on hydration.
+  // Splash the branded loader until both React has hydrated AND wagmi
+  // has finished resolving the saved wallet session. Without the wagmi
+  // status check, a refresh with a previously connected wallet renders
+  // DisconnectedHero for the brief window between mount and reconnect,
+  // then snaps to the dashboard.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const { isConnected } = useAccount();
+  const { isConnected, status } = useAccount();
   const { route, setRoute } = useHashRoute();
 
-  if (!mounted) return <LoadingScreen />;
+  if (!mounted || status === 'connecting' || status === 'reconnecting') {
+    return <LoadingScreen />;
+  }
 
   if (!isConnected) {
     return (

@@ -39,6 +39,12 @@ const GROUPS: NavGroup[] = [
       { route: 'swap:faucet', label: 'Faucet', active: 'bg-amber-500 text-black', glyph: '$' },
     ],
   },
+  {
+    title: 'Strategy',
+    items: [
+      { route: 'strategy:leveraged-lp', label: 'Leveraged LP', active: 'bg-cyan-500 text-black', glyph: '⏃' },
+    ],
+  },
 ];
 
 interface Props {

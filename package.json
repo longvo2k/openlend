@@ -17,7 +17,11 @@
     "add-liquidity": "hardhat run scripts/add-liquidity.ts --network iopnTestnet",
     "remove-liquidity": "hardhat run scripts/remove-liquidity.ts --network iopnTestnet",
     "swap-opn-for-musdc": "hardhat run scripts/swap-opn-for-musdc.ts --network iopnTestnet",
-    "swap-musdc-for-opn": "hardhat run scripts/swap-musdc-for-opn.ts --network iopnTestnet"
+    "swap-musdc-for-opn": "hardhat run scripts/swap-musdc-for-opn.ts --network iopnTestnet",
+    "oracle:propose": "hardhat run scripts/oracle-propose.ts --network iopnTestnet",
+    "oracle:commit":  "hardhat run scripts/oracle-commit.ts --network iopnTestnet",
+    "oracle:cancel":  "hardhat run scripts/oracle-cancel.ts --network iopnTestnet",
+    "oracle:show":    "hardhat run scripts/oracle-show.ts --network iopnTestnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^7.0.0",

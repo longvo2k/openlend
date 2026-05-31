@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount } from 'wagmi';
 import { ConnectGate } from '../components/ConnectGate';
 import { DisconnectedHero } from '../components/DisconnectedHero';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { Sidebar } from '../components/Sidebar';
 import { useHashRoute, sectionOf } from '../lib/route';
 
@@ -21,8 +23,16 @@ import { LeveragedLPPanel } from '../components/strategy/LeveragedLPPanel';
 import { PositionsDashboard } from '../components/strategy/PositionsDashboard';
 
 export default function Home() {
+  // Splash the branded loader during SSR + the first client paint so the
+  // user does not see the empty/disconnected hero flicker before wagmi
+  // has settled the connection state on hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const { isConnected } = useAccount();
   const { route, setRoute } = useHashRoute();
+
+  if (!mounted) return <LoadingScreen />;
 
   if (!isConnected) {
     return (

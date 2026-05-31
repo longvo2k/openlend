@@ -114,7 +114,7 @@ function SinglePanel({ children }: { children: React.ReactNode }) {
 function labelFor(route: ReturnType<typeof useHashRoute>['route']): string {
   const section = sectionOf(route);
   const sectionName =
-    section === 'lend' ? 'Lend' : section === 'swap' ? 'Trade' : 'Strategy';
+    section === 'lend' ? 'Lending' : section === 'swap' ? 'Trade' : 'Strategy';
   const page = route.split(':')[1].replace(/^./, (c) => c.toUpperCase());
   return `${sectionName} · ${page}`;
 }

@@ -36,7 +36,7 @@ const ACTIVE_PILL = 'bg-black text-white';
 
 const GROUPS: NavGroup[] = [
   {
-    title: 'Lend',
+    title: 'Lending',
     items: [
       { route: 'lend:dashboard', label: 'Dashboard', active: ACTIVE_PILL, icon: LayoutGrid },
       { route: 'lend:supply', label: 'Supply', active: ACTIVE_PILL, icon: ArrowDownToLine },

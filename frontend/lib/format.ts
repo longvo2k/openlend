@@ -19,8 +19,16 @@ export function formatMUSDC(value: bigint | undefined, decimals = 2): string {
   return fmt(value, 6, decimals);
 }
 
-/** LP token is 18-decimals (OpenZeppelin ERC20 default). */
-export function formatLP(value: bigint | undefined, decimals = 4): string {
+/**
+ * LP token is 18-decimals (OpenZeppelin ERC20 default).
+ *
+ * Default precision is 8 because UniV2-style LP supply is bootstrapped via
+ * `sqrt(reserveA * reserveB)`, which produces tiny numbers when one side is
+ * a low-decimal token (mUSDC is 6 decimals). A 10-OPN/1000-mUSDC bootstrap
+ * yields ~0.0001 LP total supply, so individual holders sit well below
+ * 0.0001 and would render as `0.0000` at 4-decimal precision.
+ */
+export function formatLP(value: bigint | undefined, decimals = 8): string {
   return fmt(value, 18, decimals);
 }
 
@@ -43,10 +51,16 @@ export function parseLP(s: string): bigint {
 
 /* ----------------------------- Misc helpers ----------------------------- */
 
+/**
+ * Format a 1e18-scaled health factor. Anything above 10,000 is treated as
+ * effectively infinite (dust debt from interest accrual would otherwise
+ * display as a 12+ digit number).
+ */
 export function formatHF(hf: bigint | undefined): { text: string; tone: 'green' | 'yellow' | 'red' | 'neutral' } {
   if (hf === undefined) return { text: '—', tone: 'neutral' };
   if (hf === maxUint256) return { text: '∞', tone: 'green' };
   const asNum = Number(formatUnits(hf, 18));
+  if (asNum >= 10_000) return { text: '∞', tone: 'green' };
   const text = asNum.toFixed(2);
   if (asNum < 1) return { text, tone: 'red' };
   if (asNum < 1.2) return { text, tone: 'yellow' };

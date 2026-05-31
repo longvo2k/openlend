@@ -115,9 +115,11 @@ npm run remove-liquidity -- 0.5
 A unified Next.js dApp for the whole suite lives in `frontend/`. Three
 top-level sidebar sections:
 
-- **Lend** → Dashboard, Supply, Withdraw, Borrow, Repay, Liquidate, History
-- **Swap** → Swap, Liquidity (add/remove), Faucet (mint mUSDC)
-- **Strategy** → Leveraged LP (cross-protocol composer)
+- **Lending** → Dashboard (pool TVL + utilization chart + account stats),
+  Supply, Withdraw, Borrow, Repay, Liquidate, History
+- **Trade** → Swap, Liquidity (add/remove), Faucet (mint mUSDC)
+- **Strategy** → Positions (open-position dashboard with live HF),
+  Leveraged LP (open + close/rebalance composer)
 
 To run it:
 
@@ -140,18 +142,35 @@ Stack: Next.js 14 + wagmi v2 + RainbowKit + Tailwind. See specs for
 [Lend frontend](docs/superpowers/specs/2026-05-29-openlend-frontend-design.md)
 and [Swap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-design.md).
 
-### Strategy: Leveraged LP
+### Strategy: Leveraged LP, Close/Rebalance, and Positions
 
 A cross-protocol composer lives at `#leveraged-lp` (Sidebar → Strategy →
-Leveraged LP). One panel runs a 4-step sequence: deposit OPN as
-collateral on Lend, borrow OPN against it (up to 70% LTV in the UI,
-5 pp below the protocol cap for HF headroom), optionally approve mUSDC,
-then add OPN+mUSDC liquidity to Swap. The panel previews the
-resulting health factor, LP shares, and debt before any wallet signing,
-and surfaces a per-step status list with explorer-linked tx hashes.
+Leveraged LP). The panel has an **Open** mode and a **Close / Rebalance**
+mode, switched via a pill toggle in the header.
+
+**Open** runs a 4-step sequence: deposit OPN as collateral on Lend,
+borrow OPN against it (up to 70% LTV in the UI, 5 pp below the protocol
+cap for HF headroom), optionally approve mUSDC, then add OPN+mUSDC
+liquidity to Swap. The panel previews the resulting health factor, LP
+shares, and debt before any wallet signing, and surfaces a per-step
+status list with explorer-linked tx hashes.
+
+**Close / Rebalance** runs the inverse: a 0–100% LP-burn slider drives
+a 3-step unwind (remove liquidity, repay debt with the received OPN,
+withdraw collateral). The collateral-withdraw amount is computed to
+preserve the pre-close health factor, so any partial close is a true
+rebalance rather than a leverage shift. Steps that would no-op (no
+debt to repay, no collateral to withdraw) are skipped automatically.
 
 Frontend-only orchestration — no router contract — so each step records
 correctly under the user's address.
+
+The **Positions** view at `#positions` (Sidebar → Strategy → Positions)
+surfaces the active Leveraged LP position with live collateral, debt,
+LP balance, derived mUSDC-equivalent net value, and a color-coded
+Health Factor badge. Risk banners appear when HF drops below 1.2
+(warning) or below 1.0 (liquidatable). The "Manage position" CTA
+deep-links back into the composer.
 
 ### Deploying the frontend to Vercel
 

@@ -13,6 +13,7 @@ export type Route =
   | 'swap:swap'
   | 'swap:liquidity'
   | 'swap:faucet'
+  | 'strategy:positions'
   | 'strategy:leveraged-lp';
 
 export type Section = 'lend' | 'swap' | 'strategy';
@@ -37,6 +38,7 @@ const HASH_TO_ROUTE: Record<string, Route> = {
   swap: 'swap:swap',
   liquidity: 'swap:liquidity',
   faucet: 'swap:faucet',
+  positions: 'strategy:positions',
   'leveraged-lp': 'strategy:leveraged-lp',
 };
 

@@ -31,7 +31,7 @@ import {
 type Mode = 'add' | 'remove';
 type Phase = 'idle' | 'approving' | 'signing' | 'pending' | 'success';
 
-const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+const GAS_RESERVE_WEI = 10_000_000_000_000_000n; // 0.01 OPN (~10 txs at 7 gwei)
 
 function usdOfOPN(amountOPN: bigint, reserveOPN: bigint, reserveMUSDC: bigint): bigint {
   if (reserveOPN === 0n) return 0n;

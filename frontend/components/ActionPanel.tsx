@@ -107,8 +107,10 @@ const META: Record<
   },
 };
 
-// Leave a small reserve so MAX doesn't leave the wallet with zero for gas.
-const GAS_RESERVE_WEI = 100_000_000_000_000n; // 0.0001 OPN
+// Leave a reserve so MAX doesn't leave the wallet with zero for gas.
+// IOPN gasPrice ≈ 7 gwei × ~150k gas per tx = ~0.001 OPN per tx; keep 10×
+// cushion to cover spikes and follow-up reset/repeat actions.
+const GAS_RESERVE_WEI = 10_000_000_000_000_000n; // 0.01 OPN
 
 export function ActionPanel({ kind }: Props) {
   const meta = META[kind];
@@ -165,7 +167,16 @@ export function ActionPanel({ kind }: Props) {
       return m > 0n ? m : 0n;
     }
     if (kind === 'withdraw') return sharesRaw as bigint | undefined;
-    if (kind === 'repay') return debtRaw as bigint | undefined;
+    if (kind === 'repay') {
+      // Cap at wallet balance minus gas reserve so MAX never asks for more
+      // OPN than the wallet can actually send. Contract caps at current debt
+      // internally, so undershoot is fine and overshoot is the real risk.
+      const debt = debtRaw as bigint | undefined;
+      if (debt === undefined) return undefined;
+      if (!bal) return debt;
+      const spendable = bal.value > GAS_RESERVE_WEI ? bal.value - GAS_RESERVE_WEI : 0n;
+      return debt < spendable ? debt : spendable;
+    }
     return undefined;
   }, [kind, bal, sharesRaw, debtRaw]);
 

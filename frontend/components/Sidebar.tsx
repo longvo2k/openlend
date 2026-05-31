@@ -15,6 +15,7 @@ import {
   Droplets,
   Coins,
   Layers,
+  Briefcase,
 } from 'lucide-react';
 import type { Route } from '../lib/route';
 
@@ -58,6 +59,7 @@ const GROUPS: NavGroup[] = [
   {
     title: 'Strategy',
     items: [
+      { route: 'strategy:positions', label: 'Positions', active: ACTIVE_PILL, icon: Briefcase },
       { route: 'strategy:leveraged-lp', label: 'Leveraged LP', active: ACTIVE_PILL, icon: Layers },
     ],
   },

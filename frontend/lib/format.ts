@@ -43,10 +43,16 @@ export function parseLP(s: string): bigint {
 
 /* ----------------------------- Misc helpers ----------------------------- */
 
+/**
+ * Format a 1e18-scaled health factor. Anything above 10,000 is treated as
+ * effectively infinite (dust debt from interest accrual would otherwise
+ * display as a 12+ digit number).
+ */
 export function formatHF(hf: bigint | undefined): { text: string; tone: 'green' | 'yellow' | 'red' | 'neutral' } {
   if (hf === undefined) return { text: '—', tone: 'neutral' };
   if (hf === maxUint256) return { text: '∞', tone: 'green' };
   const asNum = Number(formatUnits(hf, 18));
+  if (asNum >= 10_000) return { text: '∞', tone: 'green' };
   const text = asNum.toFixed(2);
   if (asNum < 1) return { text, tone: 'red' };
   if (asNum < 1.2) return { text, tone: 'yellow' };

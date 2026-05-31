@@ -110,6 +110,44 @@ function walkEvents(logs: RawLog[]): PoolHistoryPoint[] {
   return points;
 }
 
+const SECONDS_PER_HOUR = 3600;
+
+/**
+ * Snap a unix-second timestamp to the start of its hour bucket.
+ */
+function hourBucket(ts: number): number {
+  return Math.floor(ts / SECONDS_PER_HOUR) * SECONDS_PER_HOUR;
+}
+
+/**
+ * Reduce a per-event series to one point per hour bucket (the last
+ * event in each bucket). Prepends a synthetic zero point one hour
+ * before the first real event so the chart begins at the origin.
+ */
+function bucketHourly(points: PoolHistoryPoint[]): PoolHistoryPoint[] {
+  if (points.length === 0) return [];
+
+  // Group by hour bucket, keep the last point per bucket.
+  const byBucket = new Map<number, PoolHistoryPoint>();
+  for (const p of points) {
+    if (p.ts === 0) continue; // explorer didn't supply a timestamp
+    byBucket.set(hourBucket(p.ts), { ...p, ts: hourBucket(p.ts) });
+  }
+
+  const result = Array.from(byBucket.values()).sort((a, b) => a.ts - b.ts);
+  if (result.length === 0) return [];
+
+  // Prepend a synthetic zero point one bucket before the first.
+  result.unshift({
+    ts: result[0].ts - SECONDS_PER_HOUR,
+    totalSupply: 0n,
+    totalBorrowed: 0n,
+    utilization: 0,
+  });
+
+  return result;
+}
+
 export function useLendingPoolHistory() {
   const chainId = useChainId();
   const pool = getLendingPoolAddress(chainId);
@@ -125,7 +163,8 @@ export function useLendingPoolHistory() {
       const apiBase = EXPLORER_API_BASE[chainId];
       if (!apiBase) return [];
       const logs = await fetchLogsViaExplorer(apiBase, pool);
-      return walkEvents(logs);
+      const walked = walkEvents(logs);
+      return bucketHourly(walked);
     },
   });
 }

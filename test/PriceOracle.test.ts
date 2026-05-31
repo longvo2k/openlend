@@ -182,4 +182,40 @@ describe("PriceOracle", () => {
       expect(await oracle.currentPrice()).to.equal(p2);
     });
   });
+
+  describe("pendingProposal view", () => {
+    it("returns zero/zero/false when no proposal exists", async () => {
+      const { oracle } = await deploy();
+      const [price, unlockTime, canCommit] = await oracle.pendingProposal();
+      expect(price).to.equal(0n);
+      expect(unlockTime).to.equal(0n);
+      expect(canCommit).to.equal(false);
+    });
+
+    it("returns pending price + unlock + canCommit=false before unlock", async () => {
+      const { oracle } = await deploy();
+      const newPrice = ethers.parseEther("120");
+      await oracle.proposeNewPrice(newPrice);
+      const [price, unlockTime, canCommit] = await oracle.pendingProposal();
+      expect(price).to.equal(newPrice);
+      expect(unlockTime).to.be.gt(0n);
+      expect(canCommit).to.equal(false);
+    });
+
+    it("returns canCommit=true once block.timestamp reaches unlockTime", async () => {
+      const { oracle } = await deploy();
+      await oracle.proposeNewPrice(ethers.parseEther("120"));
+      await ethers.provider.send("evm_increaseTime", [3600]);
+      await ethers.provider.send("evm_mine", []);
+      const [, , canCommit] = await oracle.pendingProposal();
+      expect(canCommit).to.equal(true);
+    });
+  });
+
+  describe("getPrice", () => {
+    it("returns currentPrice", async () => {
+      const { oracle, initialPrice } = await deploy();
+      expect(await oracle.getPrice()).to.equal(initialPrice);
+    });
+  });
 });

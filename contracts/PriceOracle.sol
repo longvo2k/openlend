@@ -73,4 +73,26 @@ contract PriceOracle is Ownable {
         pendingUnlockTime = 0;
         emit PriceCommitted(oldPrice, currentPrice);
     }
+
+    /// @notice Returns the active price. Sugar over `currentPrice`.
+    function getPrice() external view returns (uint256) {
+        return currentPrice;
+    }
+
+    /**
+     * @notice Returns the pending proposal snapshot for UI consumption.
+     * @return newPrice    The proposed price, or zero if none pending.
+     * @return unlockTime  Unix seconds at which commit becomes possible.
+     * @return canCommit   True iff a proposal exists and the timelock has
+     *                     elapsed.
+     */
+    function pendingProposal()
+        external
+        view
+        returns (uint256 newPrice, uint256 unlockTime, bool canCommit)
+    {
+        newPrice = pendingPrice;
+        unlockTime = pendingUnlockTime;
+        canCommit = unlockTime != 0 && block.timestamp >= unlockTime;
+    }
 }

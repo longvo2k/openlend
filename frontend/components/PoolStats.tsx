@@ -4,6 +4,7 @@ import { useChainId, useReadContracts } from 'wagmi';
 import { Database } from 'lucide-react';
 import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
 import { formatOPN, bpsToPct } from '@/lib/format';
+import { OraclePriceBadge } from '@/components/OraclePriceBadge';
 
 export function PoolStats() {
   const chainId = useChainId();
@@ -66,6 +67,10 @@ export function PoolStats() {
             style={{ width: `${utilFill * 100}%` }}
           />
         </div>
+      </div>
+
+      <div className="border-t border-zinc-200 pt-3 mt-6">
+        <OraclePriceBadge />
       </div>
     </Card>
   );

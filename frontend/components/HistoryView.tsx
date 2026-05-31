@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUserHistory, type EventKind, type HistoryEvent } from '@/lib/history';
 import { iopnTestnet } from '@/lib/chains';
 import { formatOPN } from '@/lib/format';
+import { usePagination } from '@/lib/use-pagination';
+import { Pagination } from '@/components/ui/Pagination';
 
 const PAGE_SIZE = 10;
 
@@ -65,27 +65,7 @@ function formatRelative(ts: number): string {
 
 export function HistoryView() {
   const { data: events, isLoading, error, refetch, isFetching } = useUserHistory();
-  const [page, setPage] = useState(0);
-
-  const total = events?.length ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  // Clamp page back into range when the dataset shrinks (e.g. a refetch
-  // returns fewer events than the current page would cover) or when
-  // events disappear after a wallet switch.
-  useEffect(() => {
-    if (page > totalPages - 1) setPage(0);
-  }, [page, totalPages]);
-
-  const pageEvents = useMemo<HistoryEvent[]>(() => {
-    if (!events) return [];
-    const start = page * PAGE_SIZE;
-    return events.slice(start, start + PAGE_SIZE);
-  }, [events, page]);
-
-  const startIdx = total === 0 ? 0 : page * PAGE_SIZE + 1;
-  const endIdx = Math.min(total, (page + 1) * PAGE_SIZE);
-  const showPagination = total > PAGE_SIZE;
+  const pagination = usePagination<HistoryEvent>(events ?? [], PAGE_SIZE);
 
   return (
     <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
@@ -139,43 +119,22 @@ export function HistoryView() {
       {events && events.length > 0 && (
         <>
           <ul className="divide-y divide-zinc-200">
-            {pageEvents.map((e) => (
+            {pagination.pageItems.map((e) => (
               <Row key={`${e.txHash}-${e.logIndex}`} event={e} />
             ))}
           </ul>
 
-          {showPagination && (
-            <nav
-              className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-3 text-xs text-zinc-700"
-              aria-label="History pagination"
-            >
-              <span className="tabular-nums">
-                {startIdx}-{endIdx} of {total}
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-300 bg-white text-zinc-900 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-                </button>
-                <span className="px-2 tabular-nums">
-                  page {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-300 bg-white text-zinc-900 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </div>
-            </nav>
+          {pagination.hasMultiplePages && (
+            <Pagination
+              className="mt-4"
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              rangeStart={pagination.rangeStart}
+              rangeEnd={pagination.rangeEnd}
+              onPageChange={pagination.setPage}
+              ariaLabel="History pagination"
+            />
           )}
         </>
       )}

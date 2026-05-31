@@ -40,6 +40,14 @@ const EXPLORER_API_BASE: Record<number, string | undefined> = {
 const DEFAULT_WINDOW_BLOCKS = 50_000n;
 /** RPC fallback chunk size. Many RPCs silently cap eth_getLogs around 5k. */
 const RPC_CHUNK_BLOCKS = 4900n;
+/**
+ * Explorer scan window. Caps how far back we ask the explorer to look
+ * on each fetch so a long-lived testnet contract does not stream the
+ * entire log history over the wire every 30 seconds. At IOPN's ~2s
+ * block time this covers roughly 56 hours of history. Events older
+ * than this window are simply not shown.
+ */
+const EXPLORER_WINDOW_BLOCKS = 100_000n;
 
 interface RawLog {
   address: string;
@@ -75,7 +83,7 @@ export function useUserHistory() {
 
       const apiBase = EXPLORER_API_BASE[chainId];
       const logs = apiBase
-        ? await fetchLogsViaExplorer(apiBase, pool)
+        ? await fetchLogsViaExplorer(apiBase, pool, client)
         : await fetchLogsViaRpc(client, pool);
 
       const events: HistoryEvent[] = [];
@@ -100,12 +108,27 @@ export function useUserHistory() {
 async function fetchLogsViaExplorer(
   apiBase: string,
   contract: `0x${string}`,
+  client: ReturnType<typeof usePublicClient>,
 ): Promise<RawLog[]> {
-  // The explorer handles paginating internally; we don't need to chunk.
-  // It also returns timeStamp per-log, saving us a per-block round-trip.
+  // Bound the scan to the most recent EXPLORER_WINDOW_BLOCKS so we never
+  // pull the entire contract history on each 30s refetch. The explorer's
+  // `getLogs` endpoint ignores `page`/`offset` query params (verified
+  // against testnet.iopn.tech 2026-06-01), so we cap via the block range
+  // instead. Older events drop off the bottom of the list.
+  let fromBlock = 0n;
+  if (client) {
+    try {
+      const latest = await client.getBlockNumber();
+      fromBlock = latest > EXPLORER_WINDOW_BLOCKS ? latest - EXPLORER_WINDOW_BLOCKS : 0n;
+    } catch {
+      // If the latest-block read fails, fall back to scanning from genesis
+      // rather than failing the whole history view.
+      fromBlock = 0n;
+    }
+  }
   const url =
     `${apiBase}?module=logs&action=getLogs` +
-    `&fromBlock=0&toBlock=latest&address=${contract}`;
+    `&fromBlock=${fromBlock.toString()}&toBlock=latest&address=${contract}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Explorer logs HTTP ${res.status}`);
   const json = (await res.json()) as ExplorerResponse;

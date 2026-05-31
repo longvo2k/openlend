@@ -10,6 +10,7 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
+import { ArrowLeftRight } from 'lucide-react';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -232,14 +233,15 @@ export function SwapPanel() {
     : `${formatOPN(minOut)} OPN`;
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-emerald-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
 
       <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 text-lg font-bold">↔</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <ArrowLeftRight className="h-5 w-5" aria-hidden />
+        </div>
         <div>
           <h3 className="text-lg font-semibold">Swap</h3>
-          <p className="text-sm text-zinc-400">Trade native OPN ↔ mUSDC. 0.30% fee retained for LPs.</p>
+          <p className="text-sm text-zinc-800">Trade native OPN ↔ mUSDC. 0.30% fee retained for LPs.</p>
         </div>
       </header>
 
@@ -263,7 +265,7 @@ export function SwapPanel() {
             onClick={flip}
             disabled={busy}
             aria-label="Flip swap direction"
-            className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+            className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-zinc-900 hover:bg-zinc-100 disabled:opacity-50"
           >
             ⇅
           </button>
@@ -279,28 +281,28 @@ export function SwapPanel() {
 
         <SlippageSelector valueBps={slippageBps} onChange={setSlippageBps} disabled={busy} />
 
-        <div className="text-xs text-zinc-500">
-          Min received at {(slippageBps / 100).toFixed(2)}% slippage: <span className="text-zinc-300">{minOutText}</span>
+        <div className="text-xs text-zinc-700">
+          Min received at {(slippageBps / 100).toFixed(2)}% slippage: <span className="text-zinc-900">{minOutText}</span>
         </div>
 
         <button
           onClick={onSubmit}
           disabled={busy || !pair || !parsedAmountIn || parsedAmountIn <= 0n}
-          className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500"
+          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
         >
           {busy ? 'Working…' : ctaLabel}
         </button>
 
         {status && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-900">
             <span>{status}</span>
             {explorer && (
-              <a className="text-emerald-400 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
+              <a className="text-emerald-700 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
                 view tx ↗
               </a>
             )}
             {phase === 'success' && (
-              <button className="text-zinc-500 underline" onClick={reset}>reset</button>
+              <button className="text-zinc-700 underline" onClick={reset}>reset</button>
             )}
           </div>
         )}

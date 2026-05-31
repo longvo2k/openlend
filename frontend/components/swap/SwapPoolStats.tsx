@@ -1,6 +1,7 @@
 'use client';
 
 import { useAccount, useChainId, useReadContracts } from 'wagmi';
+import { Database } from 'lucide-react';
 import { openSwapPairAbi, getPairAddress } from '../../lib/contract';
 import { formatOPN, formatMUSDC, formatLP } from '../../lib/format';
 
@@ -55,10 +56,10 @@ export function SwapPoolStats() {
     return (
       <Card>
         <Header />
-        <p className="mt-4 text-sm text-amber-300/90">
-          No OpenSwap deployment for chainId {chainId}. Run{' '}
-          <code className="text-amber-200">npm run deploy:testnet</code> from the repo root,
-          then <code className="text-amber-200">npm run sync:testnet</code> in this folder.
+        <p className="mt-4 text-sm text-zinc-900">
+          No Swap deployment for chainId {chainId}. Run{' '}
+          <code className="bg-zinc-100 px-1 rounded text-black">npm run deploy:testnet</code> from the repo root,
+          then <code className="bg-zinc-100 px-1 rounded text-black">npm run sync:testnet</code> in this folder.
         </p>
       </Card>
     );
@@ -73,7 +74,7 @@ export function SwapPoolStats() {
         <Stat label="Spot price" value={isLoading ? '…' : `${priceText} mUSDC/OPN`} />
         <Stat label="Your LP share" value={isLoading ? '…' : `${sharePct}%`} />
       </dl>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-zinc-700">
         <span>Total LP: {isLoading ? '…' : formatLP(totalSupply)}</span>
         <span>•</span>
         <span>Swap fee: 0.30%</span>
@@ -86,8 +87,7 @@ export function SwapPoolStats() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-emerald-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
       {children}
     </section>
   );
@@ -96,25 +96,12 @@ function Card({ children }: { children: React.ReactNode }) {
 function Header() {
   return (
     <header className="flex items-start gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <path d="M7 7h10v10H7z" />
-          <path d="M3 11l4-4M21 13l-4 4" />
-        </svg>
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
+        <Database className="h-[18px] w-[18px]" aria-hidden />
       </div>
       <div className="flex-1 min-w-0">
         <h2 className="text-lg font-semibold">Pool</h2>
-        <p className="mt-0.5 text-sm text-zinc-400">OPN / mUSDC constant-product AMM on IOPN testnet</p>
+        <p className="mt-0.5 text-sm text-zinc-800">OPN / mUSDC constant-product AMM on IOPN testnet</p>
       </div>
     </header>
   );
@@ -123,7 +110,7 @@ function Header() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-zinc-700">{label}</dt>
       <dd className="mt-1 text-lg font-semibold tabular-nums">{value}</dd>
     </div>
   );

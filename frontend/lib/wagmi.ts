@@ -3,10 +3,10 @@ import { hardhat } from 'wagmi/chains';
 import { http } from 'viem';
 import { iopnTestnet } from './chains';
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'openlend-no-wc';
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'stratus-no-wc';
 
 export const wagmiConfig = getDefaultConfig({
-  appName: 'OpenLend',
+  appName: 'Stratus',
   projectId,
   chains: [iopnTestnet, hardhat],
   transports: {

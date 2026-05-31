@@ -6,9 +6,9 @@ import * as path from "path";
  * Deploys all three protocol contracts and writes their addresses to
  * `deployments/<network>.json`:
  *
- *   1. LendingPool       (OpenLend money market)
- *   2. MockUSDC          (open-faucet ERC-20 used by OpenSwap)
- *   3. OpenSwapPair      (OPN <> mUSDC AMM)
+ *   1. LendingPool       (Lend money market)
+ *   2. MockUSDC          (open-faucet ERC-20 used by Swap)
+ *   3. OpenSwapPair      (OPN <> mUSDC AMM — Swap)
  *
  * The deployment JSON preserves existing fields it does not overwrite, so
  * partial re-deploys are possible by commenting out a block below.

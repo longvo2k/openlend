@@ -7,6 +7,7 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
+import { Zap } from 'lucide-react';
 import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
 import { iopnTestnet } from '../lib/chains';
 import { formatHF, formatOPN, parseOPN } from '../lib/format';
@@ -128,24 +129,23 @@ export function LiquidatePanel() {
 
   const hfClass =
     hfFmt.tone === 'red'
-      ? 'text-red-400'
+      ? 'text-red-700'
       : hfFmt.tone === 'yellow'
-      ? 'text-amber-300'
+      ? 'text-zinc-900'
       : hfFmt.tone === 'green'
-      ? 'text-emerald-400'
-      : 'text-zinc-300';
+      ? 'text-emerald-700'
+      : 'text-zinc-900';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-red-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
 
       <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400 text-lg font-bold">
-          ⚡
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <Zap className="h-5 w-5" aria-hidden />
         </div>
         <div>
           <h3 className="text-lg font-semibold">Liquidate</h3>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-800">
             Close an unhealthy position. You repay up to 50% of the debt and
             receive collateral worth that amount plus a 5% bonus.
           </p>
@@ -154,7 +154,7 @@ export function LiquidatePanel() {
 
       <div className="space-y-4">
         <label className="block">
-          <span className="text-xs uppercase tracking-wide text-zinc-500">
+          <span className="text-xs uppercase tracking-wide text-zinc-700">
             Borrower address
           </span>
           <input
@@ -163,44 +163,44 @@ export function LiquidatePanel() {
             placeholder="0x…"
             disabled={busy}
             spellCheck={false}
-            className="mt-1.5 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 font-mono text-sm outline-none transition focus:border-red-500 disabled:opacity-50"
+            className="mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 font-mono text-sm outline-none transition focus:border-amber-500 disabled:opacity-50"
           />
           {target && !targetValid && (
-            <span className="mt-1 block text-[11px] text-amber-300">
+            <span className="mt-1 block text-[11px] text-zinc-900">
               Not a valid 0x address.
             </span>
           )}
         </label>
 
         {targetValid && (
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3 text-xs">
+          <div className="rounded-lg border border-zinc-300 bg-white p-3 text-xs">
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <div className="text-zinc-500 uppercase tracking-wide">Collateral</div>
+                <div className="text-zinc-700 uppercase tracking-wide">Collateral</div>
                 <div className="mt-0.5 font-medium tabular-nums">
                   {collateral === undefined ? '…' : `${formatOPN(collateral)} OPN`}
                 </div>
               </div>
               <div>
-                <div className="text-zinc-500 uppercase tracking-wide">Debt</div>
+                <div className="text-zinc-700 uppercase tracking-wide">Debt</div>
                 <div className="mt-0.5 font-medium tabular-nums">
                   {debt === undefined ? '…' : `${formatOPN(debt)} OPN`}
                 </div>
               </div>
               <div>
-                <div className="text-zinc-500 uppercase tracking-wide">HF</div>
+                <div className="text-zinc-700 uppercase tracking-wide">HF</div>
                 <div className={`mt-0.5 font-semibold tabular-nums ${hfClass}`}>
                   {hf === undefined ? '…' : hfFmt.text}
                 </div>
               </div>
             </div>
             {hasDebt && isHealthy && (
-              <p className="mt-3 text-[11px] text-amber-300">
+              <p className="mt-3 text-[11px] text-zinc-900">
                 Position is healthy (HF ≥ 1.0). Liquidation will revert.
               </p>
             )}
             {hasDebt === false && (
-              <p className="mt-3 text-[11px] text-zinc-500">
+              <p className="mt-3 text-[11px] text-zinc-700">
                 Target has no debt — nothing to liquidate.
               </p>
             )}
@@ -209,18 +209,18 @@ export function LiquidatePanel() {
 
         <div>
           <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wide">
-            <span className="text-zinc-500">Amount to repay</span>
+            <span className="text-zinc-700">Amount to repay</span>
             <button
               type="button"
               disabled={busy || !maxRepay || maxRepay === 0n}
               onClick={onMax}
-              className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-red-400 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30"
+              className="rounded bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
             >
               MAX
             </button>
           </div>
           <div
-            className={`flex items-center rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2.5 transition focus-within:border-red-500 ${
+            className={`flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-2.5 transition focus-within:border-amber-500 ${
               busy ? 'opacity-50' : ''
             }`}
           >
@@ -232,10 +232,10 @@ export function LiquidatePanel() {
               disabled={busy}
               className="min-w-0 flex-1 bg-transparent text-lg font-medium outline-none"
             />
-            <span className="ml-2 text-sm font-medium text-zinc-500">OPN</span>
+            <span className="ml-2 text-sm font-medium text-zinc-700">OPN</span>
           </div>
           {targetValid && (
-            <div className="mt-1 text-[11px] text-zinc-500">
+            <div className="mt-1 text-[11px] text-zinc-700">
               Max per call (50% close factor): {maxRepayFormatted}
             </div>
           )}
@@ -244,17 +244,17 @@ export function LiquidatePanel() {
         <button
           onClick={onSubmit}
           disabled={busy || !pool || !targetValid || !parsedAmount}
-          className="w-full rounded-lg bg-red-500 py-2.5 font-semibold text-black transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-red-500"
+          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
         >
           {busy ? 'Working…' : 'Liquidate'}
         </button>
 
         {status && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-900">
             <span>{status}</span>
             {explorer && (
               <a
-                className="text-red-400 underline hover:opacity-80"
+                className="text-red-700 underline hover:opacity-80"
                 target="_blank"
                 rel="noopener noreferrer"
                 href={explorer}
@@ -263,7 +263,7 @@ export function LiquidatePanel() {
               </a>
             )}
             {phase === 'success' && (
-              <button className="text-zinc-500 underline" onClick={reset}>
+              <button className="text-zinc-700 underline" onClick={reset}>
                 reset
               </button>
             )}

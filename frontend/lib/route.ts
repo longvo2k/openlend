@@ -12,23 +12,19 @@ export type Route =
   | 'lend:history'
   | 'swap:swap'
   | 'swap:liquidity'
-  | 'swap:faucet';
+  | 'swap:faucet'
+  | 'strategy:leveraged-lp';
 
-export type Section = 'lend' | 'swap';
+export type Section = 'lend' | 'swap' | 'strategy';
 export type ActionKind = 'supply' | 'withdraw' | 'borrow' | 'repay';
 
 export function sectionOf(route: Route): Section {
-  return route.startsWith('swap:') ? 'swap' : 'lend';
+  if (route.startsWith('swap:')) return 'swap';
+  if (route.startsWith('strategy:')) return 'strategy';
+  return 'lend';
 }
 
-/* ----------------------------- Hash routing -----------------------------
- * Flat hash format. Each route maps 1:1 to a hash so direct links work:
- *
- *   #dashboard | #supply | #withdraw | #borrow | #repay | #liquidate | #history
- *   #swap      | #liquidity | #faucet
- *
- * Unknown / missing hash defaults to lend:dashboard.
- */
+/* ----------------------------- Hash routing ----------------------------- */
 
 const HASH_TO_ROUTE: Record<string, Route> = {
   dashboard: 'lend:dashboard',
@@ -41,6 +37,7 @@ const HASH_TO_ROUTE: Record<string, Route> = {
   swap: 'swap:swap',
   liquidity: 'swap:liquidity',
   faucet: 'swap:faucet',
+  'leveraged-lp': 'strategy:leveraged-lp',
 };
 
 const ROUTE_TO_HASH: Record<Route, string> = Object.fromEntries(

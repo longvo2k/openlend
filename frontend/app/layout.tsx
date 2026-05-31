@@ -3,18 +3,18 @@ import { Providers } from './providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'OpenLend',
-  description: 'Minimal borrow/lend pool on IOPN testnet',
+  title: 'Stratus',
+  description: 'Stratus — DeFi suite on IOPN testnet (Lend + Swap + Leveraged LP composer)',
   icons: {
-    icon: '/favicon.png',
-    apple: '/favicon.png',
+    icon: '/stratus-mark.svg',
+    apple: '/stratus-mark.svg',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-zinc-950 text-zinc-100 min-h-screen">
+      <body className="bg-white text-black min-h-screen">
         <Providers>{children}</Providers>
       </body>
     </html>

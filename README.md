@@ -1,18 +1,20 @@
-# OpenLend + OpenSwap
+# Stratus
 
-Two minimal DeFi primitives on the [IOPN testnet](https://iopn.gitbook.io/iopn/developer-docs)
-shipped from a single repo:
+A minimal DeFi suite on the [IOPN testnet](https://iopn.gitbook.io/iopn/developer-docs).
+Three primitives shipped from a single repo:
 
-- **OpenLend** — single-asset native-OPN borrow/lend pool. Supply OPN to
+- **Lend** — single-asset native-OPN borrow/lend pool. Supply OPN to
   earn 5% APR, or post OPN as collateral and borrow OPN up to 75% LTV.
   Liquidations: 80% threshold, 50% close factor, 5% bonus.
-- **OpenSwap** — UniV2-style constant-product AMM trading native OPN
+- **Swap** — UniV2-style constant-product AMM trading native OPN
   against **mUSDC** (a 6-decimal mock USDC with an open faucet). 0.30%
   swap fee retained for LPs.
+- **Leveraged LP** — strategy composer layered on top of Lend +
+  Swap. Loop borrow → swap → LP to lever an OPN/mUSDC LP position.
 
 > Educational projects. Single-asset / single-pair, fixed-rate, no oracle.
-> Specs: [OpenLend](docs/superpowers/specs/2026-05-29-iopn-lending-design.md),
-> [OpenSwap](docs/superpowers/specs/2026-05-29-openswap-design.md).
+> Specs: [Lend](docs/superpowers/specs/2026-05-29-iopn-lending-design.md),
+> [Swap](docs/superpowers/specs/2026-05-29-openswap-design.md).
 
 ## Network
 
@@ -29,7 +31,7 @@ shipped from a single repo:
 
 ```bash
 git clone <this repo>
-cd openlend
+cd stratus
 npm install
 cp .env.example .env
 # edit .env: set PRIVATE_KEY (testnet only — never use a mainnet key)
@@ -70,7 +72,7 @@ No API key is required. On success the explorer's contract page exposes a
 
 All amounts are decimal strings (`1.5`, etc). OPN is 18-decimals; mUSDC is 6-decimals.
 
-### OpenLend
+### Lend
 
 ```bash
 # Supply 5 OPN to the pool
@@ -89,7 +91,7 @@ npm run repay -- 1
 npm run liquidate -- 0xUserAddress 0.5
 ```
 
-### OpenSwap
+### Swap
 
 ```bash
 # Mint 10,000 mUSDC to the deployer wallet (open faucet, max 10k per call)
@@ -110,11 +112,12 @@ npm run remove-liquidity -- 0.5
 
 ## Frontend (optional UI)
 
-A unified Next.js dApp for both protocols lives in `frontend/`. Two top-level
-sections (**Lend** / **Swap**) with sub-tabs:
+A unified Next.js dApp for the whole suite lives in `frontend/`. Three
+top-level sidebar sections:
 
-- **Lend** → Dashboard, Actions (Supply/Withdraw/Borrow/Repay), Liquidate, History
+- **Lend** → Dashboard, Supply, Withdraw, Borrow, Repay, Liquidate, History
 - **Swap** → Swap, Liquidity (add/remove), Faucet (mint mUSDC)
+- **Strategy** → Leveraged LP (cross-protocol composer)
 
 To run it:
 
@@ -134,8 +137,21 @@ Open http://localhost:3000. Connect a wallet (MetaMask, OKX, RainbowKit-supporte
 and either approve the IOPN Testnet network prompt or switch manually.
 
 Stack: Next.js 14 + wagmi v2 + RainbowKit + Tailwind. See specs for
-[OpenLend frontend](docs/superpowers/specs/2026-05-29-openlend-frontend-design.md)
-and [OpenSwap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-design.md).
+[Lend frontend](docs/superpowers/specs/2026-05-29-openlend-frontend-design.md)
+and [Swap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-design.md).
+
+### Strategy: Leveraged LP
+
+A cross-protocol composer lives at `#leveraged-lp` (Sidebar → Strategy →
+Leveraged LP). One panel runs a 4-step sequence: deposit OPN as
+collateral on Lend, borrow OPN against it (up to 70% LTV in the UI,
+5 pp below the protocol cap for HF headroom), optionally approve mUSDC,
+then add OPN+mUSDC liquidity to Swap. The panel previews the
+resulting health factor, LP shares, and debt before any wallet signing,
+and surfaces a per-step status list with explorer-linked tx hashes.
+
+Frontend-only orchestration — no router contract — so each step records
+correctly under the user's address.
 
 ### Deploying the frontend to Vercel
 
@@ -156,7 +172,7 @@ and [OpenSwap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-desi
 
 ## Parameters
 
-### OpenLend (lending)
+### Lend
 
 | Param                   | Value | |
 |-------------------------|-------|--|
@@ -166,7 +182,7 @@ and [OpenSwap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-desi
 | Liquidation bonus       | 5%    | |
 | Close factor            | 50%   | max debt repayable per liquidation |
 
-### OpenSwap (AMM)
+### Swap (AMM)
 
 | Param                | Value | |
 |----------------------|-------|--|
@@ -178,7 +194,7 @@ and [OpenSwap frontend](docs/superpowers/specs/2026-05-29-openswap-frontend-desi
 
 ## Out of scope
 
-OpenLend: multi-asset, price oracle, kinked rate curve, governance,
-upgradeability, flash loans. OpenSwap: factory, router/multi-hop, TWAP
+Lend: multi-asset, price oracle, kinked rate curve, governance,
+upgradeability, flash loans. Swap: factory, router/multi-hop, TWAP
 oracle, flash swaps, protocol-fee toggle, WOPN wrapped token. See each
 spec's §12.

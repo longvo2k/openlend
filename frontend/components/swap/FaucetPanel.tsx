@@ -8,6 +8,7 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
+import { Coins } from 'lucide-react';
 import { getMockUSDCAddress, mockUSDCAbi } from '../../lib/contract';
 import { iopnTestnet } from '../../lib/chains';
 import { formatMUSDC, parseMUSDC } from '../../lib/format';
@@ -106,14 +107,15 @@ export function FaucetPanel() {
   const explorer = txHash ? `${iopnTestnet.blockExplorers.default.url}/tx/${txHash}` : null;
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-amber-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
 
       <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400 text-lg font-bold">$</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <Coins className="h-5 w-5" aria-hidden />
+        </div>
         <div>
           <h3 className="text-lg font-semibold">Faucet</h3>
-          <p className="text-sm text-zinc-400">Mint test mUSDC. Max {capFormatted} per call.</p>
+          <p className="text-sm text-zinc-800">Mint test mUSDC. Max {capFormatted} per call.</p>
         </div>
       </header>
 
@@ -132,27 +134,27 @@ export function FaucetPanel() {
         />
 
         {overCap && (
-          <div className="text-xs text-amber-300">Above {capFormatted} cap — lower the amount.</div>
+          <div className="text-xs text-zinc-900">Above {capFormatted} cap — lower the amount.</div>
         )}
 
         <button
           onClick={onSubmit}
           disabled={busy || overCap || !mUSDC || !parsed}
-          className="w-full rounded-lg bg-amber-500 py-2.5 font-semibold text-black transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-amber-500"
+          className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
         >
           {busy ? 'Working…' : 'Mint mUSDC'}
         </button>
 
         {status && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-900">
             <span>{status}</span>
             {explorer && (
-              <a className="text-amber-400 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
+              <a className="text-zinc-900 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
                 view tx ↗
               </a>
             )}
             {phase === 'success' && (
-              <button className="text-zinc-500 underline" onClick={reset}>reset</button>
+              <button className="text-zinc-700 underline" onClick={reset}>reset</button>
             )}
           </div>
         )}

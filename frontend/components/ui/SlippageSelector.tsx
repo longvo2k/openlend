@@ -44,7 +44,7 @@ export function SlippageSelector({ valueBps, onChange, disabled }: SlippageSelec
 
   return (
     <div>
-      <div className="mb-1.5 text-xs uppercase tracking-wide text-zinc-500">Slippage</div>
+      <div className="mb-1.5 text-xs uppercase tracking-wide text-zinc-700">Slippage</div>
       <div className="flex flex-wrap items-center gap-2">
         {PRESETS.map((p) => {
           const active = !showCustom && p.bps === valueBps;
@@ -57,8 +57,8 @@ export function SlippageSelector({ valueBps, onChange, disabled }: SlippageSelec
               className={
                 'rounded-md px-3 py-1 text-sm font-medium transition disabled:opacity-50 ' +
                 (active
-                  ? 'bg-emerald-500 text-black'
-                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700')
+                  ? 'bg-black text-white'
+                  : 'bg-zinc-100 text-black hover:bg-zinc-200')
               }
             >
               {p.label}
@@ -72,23 +72,23 @@ export function SlippageSelector({ valueBps, onChange, disabled }: SlippageSelec
           className={
             'rounded-md px-3 py-1 text-sm font-medium transition disabled:opacity-50 ' +
             (showCustom
-              ? 'bg-emerald-500 text-black'
-              : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700')
+              ? 'bg-black text-white'
+              : 'bg-zinc-100 text-black hover:bg-zinc-200')
           }
         >
           Custom
         </button>
         {showCustom && (
-          <div className="flex items-center gap-1 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1">
+          <div className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1">
             <input
               value={customText}
               onChange={(e) => onCustomChange(e.target.value)}
               placeholder="0.00"
               inputMode="decimal"
               disabled={disabled}
-              className="w-14 bg-transparent text-sm text-zinc-200 outline-none"
+              className="w-14 bg-transparent text-sm text-black outline-none"
             />
-            <span className="text-xs text-zinc-500">%</span>
+            <span className="text-xs text-zinc-700">%</span>
           </div>
         )}
       </div>

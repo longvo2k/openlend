@@ -1,6 +1,7 @@
 'use client';
 
 import { useChainId, useReadContracts } from 'wagmi';
+import { Database } from 'lucide-react';
 import { lendingPoolAbi, getLendingPoolAddress } from '../lib/contract';
 import { formatOPN, bpsToPct } from '../lib/format';
 
@@ -36,9 +37,9 @@ export function PoolStats() {
     return (
       <Card>
         <Header rateBps={undefined} />
-        <p className="mt-4 text-sm text-amber-300/90">
+        <p className="mt-4 text-sm text-zinc-900">
           No deployment found for chainId {chainId}. Run{' '}
-          <code className="text-amber-200">npm run deploy:testnet</code> from the repo root first.
+          <code className="bg-zinc-100 px-1 rounded text-black">npm run deploy:testnet</code> from the repo root first.
         </p>
       </Card>
     );
@@ -56,10 +57,10 @@ export function PoolStats() {
 
       <div className="mt-6">
         <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-wide">
-          <span className="text-zinc-500">Utilization</span>
-          <span className="font-semibold tabular-nums text-zinc-300">{utilPct}%</span>
+          <span className="text-zinc-700">Utilization</span>
+          <span className="font-semibold tabular-nums text-zinc-900">{utilPct}%</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
           <div
             className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
             style={{ width: `${utilFill * 100}%` }}
@@ -72,8 +73,7 @@ export function PoolStats() {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-emerald-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-4 sm:p-6">
       {children}
     </section>
   );
@@ -82,33 +82,19 @@ function Card({ children }: { children: React.ReactNode }) {
 function Header({ rateBps }: { rateBps?: bigint }) {
   return (
     <header className="flex items-start gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <ellipse cx="12" cy="6" rx="9" ry="3" />
-          <path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6" />
-          <path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6" />
-        </svg>
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
+        <Database className="h-[18px] w-[18px]" aria-hidden />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Pool</h2>
           {rateBps !== undefined && (
-            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
+            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
               {bpsToPct(Number(rateBps))} APR
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-sm text-zinc-400">IOPN testnet single-asset pool</p>
+        <p className="mt-0.5 text-sm text-zinc-800">IOPN testnet single-asset pool</p>
       </div>
     </header>
   );
@@ -125,10 +111,10 @@ function BigStat({
 }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-zinc-500">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-zinc-700">{label}</dt>
       <dd className="mt-1 text-2xl font-semibold tabular-nums">
         {loading ? '…' : formatOPN(value)}
-        <span className="ml-1 text-sm font-medium text-zinc-500">OPN</span>
+        <span className="ml-1 text-sm font-medium text-zinc-700">OPN</span>
       </dd>
     </div>
   );

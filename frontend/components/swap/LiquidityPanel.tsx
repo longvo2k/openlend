@@ -11,6 +11,7 @@ import {
   useReadContracts,
   useWriteContract,
 } from 'wagmi';
+import { Droplets } from 'lucide-react';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -274,24 +275,25 @@ export function LiquidityPanel() {
       : 'Remove Liquidity';
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-violet-500/60 via-transparent to-transparent" />
+    <section className="relative overflow-hidden rounded-xl bg-white p-6">
 
       <header className="mb-5 flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400 text-lg font-bold">≋</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-black">
+          <Droplets className="h-5 w-5" aria-hidden />
+        </div>
         <div>
           <h3 className="text-lg font-semibold">Liquidity</h3>
-          <p className="text-sm text-zinc-400">Provide both assets to earn 0.30% on every swap.</p>
+          <p className="text-sm text-zinc-800">Provide both assets to earn 0.30% on every swap.</p>
         </div>
       </header>
 
-      <div className="mb-4 inline-flex rounded-lg border border-zinc-800 bg-zinc-950 p-1">
+      <div className="mb-4 inline-flex rounded-lg border border-zinc-300 bg-white p-1">
         <button
           type="button"
           onClick={() => switchMode('add')}
           className={
             'rounded-md px-3 py-1 text-sm font-medium transition ' +
-            (mode === 'add' ? 'bg-violet-500 text-black' : 'text-zinc-400 hover:bg-zinc-800')
+            (mode === 'add' ? 'bg-black text-white' : 'text-zinc-700 hover:bg-zinc-100')
           }
         >
           Add
@@ -301,7 +303,7 @@ export function LiquidityPanel() {
           onClick={() => switchMode('remove')}
           className={
             'rounded-md px-3 py-1 text-sm font-medium transition ' +
-            (mode === 'remove' ? 'bg-violet-500 text-black' : 'text-zinc-400 hover:bg-zinc-800')
+            (mode === 'remove' ? 'bg-black text-white' : 'text-zinc-700 hover:bg-zinc-100')
           }
         >
           Remove
@@ -334,13 +336,13 @@ export function LiquidityPanel() {
             onMax={onMaxMUSDC}
             accent="emerald"
           />
-          <div className="text-xs text-zinc-500">
-            You'll receive: <span className="text-zinc-300">{quotedLP === undefined ? '—' : `${formatLP(quotedLP)} LP`}</span>
+          <div className="text-xs text-zinc-700">
+            You'll receive: <span className="text-zinc-900">{quotedLP === undefined ? '—' : `${formatLP(quotedLP)} LP`}</span>
           </div>
           <button
             onClick={onSubmit}
             disabled={busy || !pair || !parsedOPN || !parsedMUSDC}
-            className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500"
+            className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
           >
             {busy ? 'Working…' : ctaLabel}
           </button>
@@ -361,8 +363,8 @@ export function LiquidityPanel() {
             onMax={onMaxLP}
             accent="violet"
           />
-          <div className="text-xs text-zinc-500">
-            You'll receive: <span className="text-zinc-300">
+          <div className="text-xs text-zinc-700">
+            You'll receive: <span className="text-zinc-900">
               {removePreview
                 ? `≈ ${formatOPN(removePreview.opnOut)} OPN + ${formatMUSDC(removePreview.mUSDCOut)} mUSDC`
                 : '—'}
@@ -371,7 +373,7 @@ export function LiquidityPanel() {
           <button
             onClick={onSubmit}
             disabled={busy || !pair || !parsedLP}
-            className="w-full rounded-lg bg-violet-500 py-2.5 font-semibold text-black transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-violet-500"
+            className="w-full rounded-lg bg-black py-2.5 font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-black"
           >
             {busy ? 'Working…' : ctaLabel}
           </button>
@@ -379,15 +381,15 @@ export function LiquidityPanel() {
       )}
 
       {status && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-zinc-900">
           <span>{status}</span>
           {explorer && (
-            <a className="text-emerald-400 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
+            <a className="text-emerald-700 underline hover:opacity-80" target="_blank" rel="noopener noreferrer" href={explorer}>
               view tx ↗
             </a>
           )}
           {phase === 'success' && (
-            <button className="text-zinc-500 underline" onClick={reset}>reset</button>
+            <button className="text-zinc-700 underline" onClick={reset}>reset</button>
           )}
         </div>
       )}

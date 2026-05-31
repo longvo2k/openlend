@@ -46,9 +46,12 @@ async function fetchLogsViaExplorer(
 
 /**
  * Walk raw logs into a chronologically ordered running-sum series.
- * Only Supplied, Withdrawn, Borrowed, Repaid affect the TVL/utilization
- * curves. CollateralDeposited and CollateralWithdrawn are skipped
- * (collateral is separate from supply on the LendingPool contract).
+ * Supplied/Withdrawn change totalSupply. Borrowed/Repaid change
+ * totalBorrowed. Liquidated also reduces totalBorrowed (the contract
+ * decrements totalBorrowed inside liquidate() but emits Liquidated
+ * instead of Repaid). CollateralDeposited/CollateralWithdrawn are
+ * skipped — collateral is tracked separately from supply on the
+ * LendingPool contract.
  */
 function walkEvents(logs: RawLog[]): PoolHistoryPoint[] {
   const points: PoolHistoryPoint[] = [];
@@ -89,6 +92,9 @@ function walkEvents(logs: RawLog[]): PoolHistoryPoint[] {
         break;
       case 'Repaid':
         totalBorrowed -= amount;
+        break;
+      case 'Liquidated':
+        totalBorrowed -= (decoded.args.repaid as bigint | undefined) ?? 0n;
         break;
       default:
         continue;

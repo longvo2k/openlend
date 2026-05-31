@@ -112,7 +112,7 @@ export function PoolHistoryChart() {
           />
           <Tooltip
             formatter={(value: number | string, name: string) => {
-              if (name === 'TVL (OPN)') {
+              if (name === 'Net deposits (OPN)') {
                 const num = typeof value === 'number' ? value : Number(value);
                 return [formatOPN(BigInt(Math.round(num * 1e18)), 4) + ' OPN', name];
               }
@@ -129,7 +129,7 @@ export function PoolHistoryChart() {
           <Line
             yAxisId="supply"
             dataKey="totalSupplyOPN"
-            name="TVL (OPN)"
+            name="Net deposits (OPN)"
             type="monotone"
             stroke="#2563eb"
             strokeWidth={2}

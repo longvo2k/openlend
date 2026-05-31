@@ -153,7 +153,7 @@ export function useLendingPoolHistory() {
   const pool = getLendingPoolAddress(chainId);
 
   return useQuery<PoolHistoryPoint[]>({
-    queryKey: ['lending-pool-history', chainId, pool],
+    queryKey: ['lending-pool-tvl-series', chainId, pool],
     enabled: Boolean(pool),
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,

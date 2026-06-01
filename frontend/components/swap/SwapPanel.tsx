@@ -11,6 +11,7 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { ArrowDown, ChevronDown, ChevronUp, ExternalLink, Settings } from 'lucide-react';
+import { TermHint } from '@/components/ui/TermHint';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -317,7 +318,9 @@ export function SwapPanel() {
 
       {slippageOpen && (
         <div className="mb-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-          <div className="mb-2 text-xs font-medium text-zinc-600">Slippage tolerance</div>
+          <div className="mb-2 flex items-center gap-1 text-xs font-medium text-zinc-600">
+            <TermHint term="Slippage">Slippage</TermHint> tolerance
+          </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {SLIPPAGE_PRESETS_BPS.map((bps) => {
               const active = slippageBps === bps && customSlippage === '';
@@ -420,7 +423,10 @@ export function SwapPanel() {
         </div>
         {minOut !== undefined && (
           <div className="flex items-center justify-between">
-            <span>Min received at {(slippageBps / 100).toFixed(2)}% slippage</span>
+            <span>
+              Min received at {(slippageBps / 100).toFixed(2)}%{' '}
+              <TermHint term="Slippage">slippage</TermHint>
+            </span>
             <span className="font-medium text-black">{minOutText}</span>
           </div>
         )}

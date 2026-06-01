@@ -10,6 +10,7 @@ import {
 import { maxUint256 } from 'viem';
 import { Layers } from 'lucide-react';
 
+import { TermHint } from '@/components/ui/TermHint';
 import {
   getLendingPoolAddress,
   getPairAddress,
@@ -72,10 +73,13 @@ export function LeveragedLPPanel() {
           <Layers className="h-5 w-5" aria-hidden />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold">Leveraged LP</h3>
+          <h3 className="inline-flex items-center gap-1 text-lg font-semibold">
+            <TermHint term="Leveraged LP">Leveraged LP</TermHint>
+          </h3>
           <p className="text-sm text-zinc-800">
-            Lock OPN as collateral, borrow OPN, pair with mUSDC, earn 0.30% LP
-            fees on the borrowed capital. Close to unwind or rebalance partial.
+            Lock OPN as <TermHint term="Collateral">collateral</TermHint>, borrow OPN, pair with
+            mUSDC, earn 0.30% <TermHint term="LP">LP</TermHint> fees on the borrowed capital.
+            Close to unwind or rebalance partial.
           </p>
         </div>
       </header>
@@ -108,10 +112,20 @@ export function LeveragedLPPanel() {
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-700">
             Current position
           </div>
-          <Row label="Collateral" value={`${formatOPN(collateral)} OPN`} />
+          <Row
+            label={<TermHint term="Collateral">Collateral</TermHint>}
+            value={`${formatOPN(collateral)} OPN`}
+          />
           <Row label="Debt" value={`${formatOPN(debt)} OPN`} />
-          <Row label="LP balance" value={`${formatLP(lpBalance)} OSP-LP`} />
-          <Row label="Health factor" value={hfFmt.text} valueClass={`font-semibold ${hfClass}`} />
+          <Row
+            label={<TermHint term="LP">LP</TermHint>}
+            value={`${formatLP(lpBalance)} OSP-LP`}
+          />
+          <Row
+            label={<TermHint term="Health factor">Health factor</TermHint>}
+            value={hfFmt.text}
+            valueClass={`font-semibold ${hfClass}`}
+          />
         </div>
       )}
 

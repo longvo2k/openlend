@@ -12,6 +12,7 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { ExternalLink, Plus } from 'lucide-react';
+import { TermHint } from '@/components/ui/TermHint';
 import {
   getMockUSDCAddress,
   getPairAddress,
@@ -393,7 +394,9 @@ export function LiquidityPanel() {
 
           {/* Preview line */}
           <div className="mt-3 flex items-center justify-between px-1 text-xs text-zinc-600">
-            <span>You'll receive</span>
+            <span className="inline-flex items-center gap-1">
+              You'll receive <TermHint term="LP">LP</TermHint>
+            </span>
             <span className="font-medium text-black">
               {quotedLP === undefined ? '—' : `${formatLP(quotedLP)} LP`}
             </span>
@@ -405,7 +408,9 @@ export function LiquidityPanel() {
         <div className="space-y-2">
           {/* LP input */}
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <div className="mb-1.5 text-xs font-medium text-zinc-500">LP to burn</div>
+            <div className="mb-1.5 flex items-center gap-1 text-xs font-medium text-zinc-500">
+              <TermHint term="LP">LP</TermHint> to burn
+            </div>
             <div className="flex items-center gap-3">
               <input
                 value={lpText}

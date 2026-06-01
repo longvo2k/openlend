@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   useAccount,
   useBalance,
@@ -16,6 +16,7 @@ import { ArrowDownToLine, ArrowUpFromLine, ArrowUpRight, Check } from 'lucide-re
 import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
 import { iopnTestnet } from '@/lib/chains';
 import { formatOPN, parseOPN } from '@/lib/format';
+import { TermHint } from '@/components/ui/TermHint';
 
 type Kind = 'supply' | 'withdraw' | 'borrow' | 'repay';
 
@@ -57,7 +58,7 @@ const META: Record<
   Kind,
   {
     title: string;
-    description: string;
+    description: ReactNode;
     primaryLabel: string;
     primaryUnit: 'OPN' | 'shares';
     primaryMaxLabel: string;
@@ -69,7 +70,11 @@ const META: Record<
 > = {
   supply: {
     title: 'Supply',
-    description: 'Deposit OPN. Earn 5% APR (linear).',
+    description: (
+      <>
+        Deposit OPN. Earn 5% <TermHint term="APR">APR</TermHint> (linear).
+      </>
+    ),
     primaryLabel: 'Amount to supply',
     primaryUnit: 'OPN',
     primaryMaxLabel: 'Wallet',
@@ -87,7 +92,12 @@ const META: Record<
   },
   borrow: {
     title: 'Borrow',
-    description: 'Post OPN collateral, borrow OPN (≤75% LTV).',
+    description: (
+      <>
+        Post OPN <TermHint term="Collateral">collateral</TermHint>, borrow OPN (≤75%{' '}
+        <TermHint term="LTV">LTV</TermHint>).
+      </>
+    ),
     primaryLabel: 'Collateral to add',
     primaryUnit: 'OPN',
     primaryMaxLabel: 'Wallet',

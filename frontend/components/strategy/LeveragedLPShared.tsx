@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { parseUnits } from 'viem';
 import { iopnTestnet } from '@/lib/chains';
 
@@ -80,7 +81,7 @@ export function Row({
   value,
   valueClass,
 }: {
-  label: string;
+  label: ReactNode;
   value: string;
   valueClass?: string;
 }) {

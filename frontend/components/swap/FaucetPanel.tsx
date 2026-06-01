@@ -9,6 +9,7 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { ExternalLink } from 'lucide-react';
+import { TermHint } from '@/components/ui/TermHint';
 import { getMockUSDCAddress, mockUSDCAbi } from '@/lib/contract';
 import { iopnTestnet } from '@/lib/chains';
 import { formatMUSDC, parseMUSDC } from '@/lib/format';
@@ -108,8 +109,12 @@ export function FaucetPanel() {
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5 shadow-sm">
       <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-semibold">Faucet</h3>
-        <span className="text-xs text-zinc-500">Cap {capFmt} per call</span>
+        <h3 className="inline-flex items-center gap-1 text-base font-semibold">
+          <TermHint term="Faucet">Faucet</TermHint>
+        </h3>
+        <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+          Cap {capFmt} per call
+        </span>
       </header>
 
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">

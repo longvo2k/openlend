@@ -8,6 +8,7 @@ import {
   useWriteContract,
 } from 'wagmi';
 import { Zap } from 'lucide-react';
+import { TermHint } from '@/components/ui/TermHint';
 import { lendingPoolAbi, getLendingPoolAddress } from '@/lib/contract';
 import { iopnTestnet } from '@/lib/chains';
 import { formatHF, formatOPN, parseOPN } from '@/lib/format';
@@ -144,10 +145,13 @@ export function LiquidatePanel() {
           <Zap className="h-5 w-5" aria-hidden />
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Liquidate</h3>
+          <h3 className="inline-flex items-center gap-1 text-lg font-semibold">
+            <TermHint term="Liquidation">Liquidate</TermHint>
+          </h3>
           <p className="text-sm text-zinc-800">
-            Close an unhealthy position. You repay up to 50% of the debt and
-            receive collateral worth that amount plus a 5% bonus.
+            Close an unhealthy position. You repay up to{' '}
+            <TermHint term="Close factor">50% of the debt</TermHint> and receive{' '}
+            <TermHint term="Collateral">collateral</TermHint> worth that amount plus a 5% bonus.
           </p>
         </div>
       </header>
@@ -188,7 +192,9 @@ export function LiquidatePanel() {
                 </div>
               </div>
               <div>
-                <div className="text-zinc-700 uppercase tracking-wide">HF</div>
+                <div className="inline-flex items-center gap-1 text-zinc-700 uppercase tracking-wide">
+                  <TermHint term="Health factor">HF</TermHint>
+                </div>
                 <div className={`mt-0.5 font-semibold tabular-nums ${hfClass}`}>
                   {hf === undefined ? '…' : hfFmt.text}
                 </div>
